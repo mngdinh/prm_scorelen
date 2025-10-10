@@ -27,7 +27,7 @@ WORKDIR /app
 COPY --from=build /app/target/scorelens-0.0.1-SNAPSHOT.jar app.jar
 
 # ✅ Copy Kafka TLS certs folder
-COPY /scorelens/certs certs
+COPY /certs certs
 # Optional: copy additional resources if needed
 #COPY --from=build /app/uploads/lab /app/uploads/lab
 #COPY --from=build /app/ArialUnicodeMSBold.ttf /app/
