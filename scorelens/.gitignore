@@ -1,0 +1,92 @@
+# ===================== #
+#   Maven / Gradle      #
+# ===================== #
+target/
+build/
+*.log
+
+# ===================== #
+#   IntelliJ IDEA       #
+# ===================== #
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# ===================== #
+#   VS Code             #
+# ===================== #
+.vscode/
+
+# ===================== #
+#   STS (Spring Tools)  #
+# ===================== #
+.apt_generated/
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans/
+.sts4-cache/
+
+# ===================== #
+#   NetBeans            #
+# ===================== #
+nbproject/private/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# ===================== #
+#   Environment / Keys  #
+# ===================== #
+.env
+.env.*
+*.jks
+*.p12
+*.pem
+*.crt
+*.key
+# Ignore all certs by default
+certs/*
+# Allow specific cert files (if needed)
+!certs/client.keystore.p12
+!certs/client.truststore.jks
+
+# ===================== #
+#   Firebase            #
+# ===================== #
+firebase-service-account.json
+**/firebase-service-account.json
+firebase-adminsdk-*.json
+
+# ===================== #
+#   OS Specific         #
+# ===================== #
+.DS_Store
+Thumbs.db
+
+# ===================== #
+#   Maven Wrapper       #
+# ===================== #
+.mvn/wrapper/maven-wrapper.jar
+mvnw
+mvnw.cmd
+
+# ===================== #
+#   Docker              #
+# ===================== #
+*.jar
+*.war
+*.tar
+docker-compose.override.yml
+
+# ===================== #
+#   Exception: Keep target/build inside src folders
+# ===================== #
+!**/src/main/**/target/
+!**/src/test/**/target/
+!**/src/main/**/build/
+!**/src/test/**/build/
+ 

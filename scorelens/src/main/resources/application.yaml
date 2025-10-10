@@ -1,0 +1,121 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /
+spring:
+  main:
+    allow-circular-references: true
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  web:
+    resources:
+      add-mappings: true
+  config:
+    import: optional:file:.env[.properties]
+  jpa:
+    hibernate:
+      ddl-auto: update
+    #      naming:
+    #        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+  #Email:
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+  # Cache Configuration
+  cache:
+    type: redis
+  # Redis Configuration
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
+      database: ${REDIS_DATABASE}
+      timeout: 10000ms
+      ssl:
+        enabled: false
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+        shutdown-timeout: 100ms
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    ssl:
+      key-store-location: ${KAFKA_KEYSTORE_LOCATION}
+      key-store-password: ${KAFKA_KEYSTORE_PASSWORD}
+      key-store-type: ${KAFKA_KEYSTORE_TYPE}
+      key-password: ${KAFKA_KEY_PASSWORD}
+      trust-store-location: ${KAFKA_TRUSTSTORE_LOCATION}
+      trust-store-password: ${KAFKA_TRUSTSTORE_PASSWORD}
+      trust-store-type: ${KAFKA_TRUSTSTORE_TYPE}
+    consumer:
+      group-id: ${KAFKA_GROUP_ID}
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    # Producer config
+    producer:
+      retries: 3                             # Retry 3 lần nếu lỗi
+      properties:
+        retry.backoff.ms: 1000               # Thời gian giữa các lần retry
+        connections.max.idle.ms: 30000      # Idle connection timeout
+        max.block.ms: 5000                   # Block tối đa khi Kafka chưa sẵn sàng
+        request.timeout.ms: 3000             # Thời gian chờ broker trả lời
+      acks: all                               # Confirm tất cả broker nhận message
+springdoc:
+  swagger-ui:
+    enable: true
+    tags-sorter: alpha
+    path: /swagger-ui.html
+jwt:
+  signerKey: ${JWT_SIGNER_KEY}
+  valid-duration: 3600 #in second
+  refreshable-duration: 604800 #in seconds
+aws:
+  s3:
+    access-key: ${AWS_ACCESS_KEY_ID}
+    secret-key: ${AWS_SECRET_ACCESS_KEY}
+    region: ${AWS_REGION}
+    bucket-name: ${AWS_BUCKET_NAME}
+    folder-prefix: ${AWS_FOLDER_PREFIX}
+    avt-folder-prefix: ${AWS_AVT_FOLDER_PREFIX}
+
+firebase:
+  type: ${FIREBASE_TYPE}
+  project-id: ${FIREBASE_PROJECT_ID}
+  private-key-id: ${FIREBASE_PRIVATE_KEY_ID}
+  private-key: ${FIREBASE_PRIVATE_KEY}
+  client-email: ${FIREBASE_CLIENT_EMAIL}
+  client-id: ${FIREBASE_CLIENT_ID}
+  auth-uri: ${FIREBASE_AUTH_URI}
+  token-uri: ${FIREBASE_TOKEN_URI}
+  auth-provider-x509-cert-url: ${FIREBASE_AUTH_PROVIDER_X509_CERT_URL}
+  client-x509-cert-url: ${FIREBASE_CLIENT_X509_CERT_URL}
+  universe-domain: ${FIREBASE_UNIVERSE_DOMAIN}
+
+app:
+  frontend:
+    url: ${FRONTEND_URL}
+
+
+
