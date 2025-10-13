@@ -14,6 +14,7 @@ import com.scorelens.Repository.StoreRepo;
 import com.scorelens.Service.Interface.IBilliardTableService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,22 +27,23 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import java.util.List;
 
 @Service
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 @Slf4j
 public class BilliardTableService implements IBilliardTableService {
 
-    BilliardTableRepo billiardTableRepo;
+    private final BilliardTableRepo billiardTableRepo;
 
-    BilliardTableMapper billiardTableMapper;
+    private final BilliardTableMapper billiardTableMapper;
 
-    S3Service s3Service;
+    private final S3Service s3Service;
 
-    QRCodeService qrCodeService;
+    private final QRCodeService qrCodeService;
 
-    StoreRepo storeRepo;
+    private final StoreRepo storeRepo;
 
-    String webUrl = "${$app.frontend.url}";
+    @Value("${app.frontend.url}")
+    private String webUrl;
+
 
     @Override
     @Transactional

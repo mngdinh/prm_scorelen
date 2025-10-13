@@ -24,7 +24,6 @@ public class ModeService implements IModeService {
     private ModeMapper modeMapper;
 
     @Override
-    @PreAuthorize("hasRole('ADMIN') or hasAuthority('CREATE_GAME_MODE')")
     public ModeResponse createMode(ModeRequest request) {
         Mode mode = new Mode();
         mode.setName(request.getName());
@@ -46,7 +45,6 @@ public class ModeService implements IModeService {
                 .orElseThrow(() -> new AppException(ErrorCode.MODE_NOT_FOUND));
         return modeMapper.toResponse(modeRepository.save(mode));
     }
-    @PreAuthorize("hasRole('ADMIN') or hasAuthority('UPDATE_GAME_MODE')")
     @Override
     public ModeResponse updateMode(Integer id, ModeRequest request) {
         Mode mode = modeRepository.findById(id)
@@ -58,7 +56,6 @@ public class ModeService implements IModeService {
         return modeMapper.toResponse(modeRepository.save(mode));
     }
 
-    @PreAuthorize("hasRole('ADMIN') or hasAuthority('DELETE_GAME_MODE')")
     @Override
     public Integer delete(Integer id) {
         if (!modeRepository.existsById(id)) {
