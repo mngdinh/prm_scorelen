@@ -82,7 +82,7 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-//        http.authorizeHttpRequests(request -> request
+        http.authorizeHttpRequests(request -> request.anyRequest().permitAll());
 //                .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
 //                .requestMatchers(PERMISSION_ENDPOINTS).hasRole("ADMIN")
 //                .requestMatchers(ROLE_ENDPOINTS).hasRole("ADMIN")
@@ -95,7 +95,6 @@ public class SecurityConfig {
 //                .requestMatchers(HttpMethod.POST, "/v*/billiard-matches").hasRole("CUSTOMER")
 //                .requestMatchers(HttpMethod.PUT, "/v*/billiard-matches").hasAnyRole("CUSTOMER", "STAFF", "MANAGER", "ADMIN")
 //                .anyRequest().authenticated());
-        http.authorizeHttpRequests(request -> request.anyRequest().permitAll());
 
         http.oauth2ResourceServer(oauth2 ->
                 oauth2.jwt(jwtConfigurer ->
@@ -141,7 +140,10 @@ public class SecurityConfig {
                 "http://localhost:5173",
                 "https://localhost:5173",
                 "https://score-lens.vercel.app",
-                "https://scorelens.onrender.com"
+                "https://scorelens.onrender.com",
+                "https://scorelens-gateway.onrender.com",
+                "https://localhost:7174",
+                "http://localhost:7174"
         ));
 
         // Thêm pattern cho mobile apps

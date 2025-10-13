@@ -26,6 +26,7 @@ public class StoreV3Controller {
     @Autowired
     StoreService storeService;
 
+
     @Operation(summary = "Get stores with unified parameters", 
                description = "Unified API that combines all GET operations from v1 controller")
     @GetMapping
