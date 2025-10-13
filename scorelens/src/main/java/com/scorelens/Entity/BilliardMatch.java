@@ -30,13 +30,11 @@ public class BilliardMatch {
     @JoinColumn(name = "modeID", nullable = false)
     private Mode mode;
 
-    @ManyToOne
-    @JoinColumn(name = "staffID")
-    private Staff staff;
+    @Column(name = "staffID")
+    private String staffID;
 
-    @ManyToOne
-    @JoinColumn(name = "customerID")
-    private Customer customer;
+    @Column(name = "customerID")
+    private String customerID;
 
     @Column(name = "setUp")
     private String setUp;

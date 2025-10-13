@@ -34,10 +34,6 @@ public class Store {
     @OneToMany(mappedBy = "store", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BilliardTable> billiardTables = new ArrayList<>();
 
-    @OneToMany(mappedBy = "store", cascade = {CascadeType.PERSIST, CascadeType.MERGE}
-            , fetch = FetchType.LAZY)
-    private Set<Staff> staffs = new HashSet<>();
-
     // Helper method
     public void addTable(BilliardTable table) {
         billiardTables.add(table);

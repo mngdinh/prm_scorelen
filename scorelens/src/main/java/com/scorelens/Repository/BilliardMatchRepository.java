@@ -10,8 +10,8 @@ import java.util.List;
 
 @Repository
 public interface BilliardMatchRepository extends JpaRepository<BilliardMatch, Integer> {
-    List<BilliardMatch> findByCustomer_CustomerID(String id);
-    List<BilliardMatch> findByStaff_StaffID(String id);
+    List<BilliardMatch> findBycustomerID(String id);
+    List<BilliardMatch> findBystaffID(String id);
 
 //    @Query(value =
 //            "SELECT bm.billiard_matchid, bm.start_time, bm.end_time, bm.status, bm.winner, " +
@@ -25,7 +25,7 @@ public interface BilliardMatchRepository extends JpaRepository<BilliardMatch, In
     @Query("SELECT bm FROM BilliardMatch bm JOIN bm.teams t JOIN t.players p WHERE p.playerID = :id")
     BilliardMatch findByPlayerId(@Param("id") Integer id);
 
-    @Query("SELECT bm FROM BilliardMatch bm JOIN bm.teams t JOIN t.players p WHERE p.customer.customerID = :id")
+    @Query("SELECT bm FROM BilliardMatch bm JOIN bm.teams t JOIN t.players p WHERE p.customerID = :id")
     List<BilliardMatch> findByCustomerId(@Param("id") String id);
 
 //    @Query(value =

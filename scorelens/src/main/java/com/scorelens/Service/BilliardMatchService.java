@@ -31,10 +31,6 @@ public class BilliardMatchService implements IBilliardMatchService {
     @Autowired
     private ModeRepository modeRepo;
     @Autowired
-    private StaffRepository staffRepo;
-    @Autowired
-    private CustomerRepo customerRepo;
-    @Autowired
     private TeamRepository teamRepo;
     @Autowired
     private GameSetRepository setRepo;
@@ -91,17 +87,13 @@ public class BilliardMatchService implements IBilliardMatchService {
 
     @Override
     public List<BilliardMatchResponse> getByCustomer(String id){
-        Customer customer = customerRepo.findById(id)
-                .orElseThrow(() -> new AppException(ErrorCode.MODE_NOT_FOUND));
-        List<BilliardMatch> matchs = repository.findByCustomer_CustomerID(id);
+        List<BilliardMatch> matchs = repository.findBycustomerID(id);
         return billiardMatchMapper.toBilliardMatchResponses(matchs);
     }
 
     @Override
     public List<BilliardMatchResponse> getByStaff(String id){
-        Staff staff = staffRepo.findById(id)
-                .orElseThrow(() -> new AppException(ErrorCode.MODE_NOT_FOUND));
-        List<BilliardMatch> matchs = repository.findByStaff_StaffID(id);
+        List<BilliardMatch> matchs = repository.findBystaffID(id);
         return billiardMatchMapper.toBilliardMatchResponses(matchs);
     }
 
@@ -115,8 +107,6 @@ public class BilliardMatchService implements IBilliardMatchService {
 
     @Override
     public List<BilliardMatchResponse> getByCustomerID(String id) {
-        Customer customer = customerRepo.findById(id)
-                .orElseThrow(() -> new AppException(ErrorCode.MATCH_NOT_FOUND));
         List<BilliardMatch> matchs = repository.findByCustomerId(id);
         return billiardMatchMapper.toBilliardMatchResponses(matchs);
     }
@@ -139,12 +129,10 @@ public class BilliardMatchService implements IBilliardMatchService {
             }
             Mode mode = modeRepo.findById(request.getModeID())
                     .orElseThrow(() -> new AppException(ErrorCode.MODE_NOT_FOUND));
-            Customer customer = customerRepo.findById(request.getCustomerID())
-                    .orElseThrow(() -> new AppException(ErrorCode.MATCH_NOT_FOUND));
             match.setBillardTable(table);
             match.setMode(mode);
-            match.setStaff(null);
-            match.setCustomer(customer);
+            match.setStaffID(null);
+            match.setCustomerID(request.getCustomerID());
         }
         if (request.getCustomerID() == null) {
             BilliardTable table = tableRepo.findById(request.getBilliardTableID())
@@ -154,13 +142,11 @@ public class BilliardMatchService implements IBilliardMatchService {
             }
             Mode mode = modeRepo.findById(request.getModeID())
                     .orElseThrow(() -> new AppException(ErrorCode.MODE_NOT_FOUND));
-            Staff staff = staffRepo.findById(request.getStaffID())
-                    .orElseThrow(() -> new AppException(ErrorCode.MATCH_NOT_FOUND));
 
             match.setBillardTable(table);
             match.setMode(mode);
-            match.setStaff(staff);
-            match.setCustomer(null);
+            match.setStaffID(request.getStaffID());
+            match.setCustomerID(null);
         }
 
         match.setTotalSet(request.getTotalSet());

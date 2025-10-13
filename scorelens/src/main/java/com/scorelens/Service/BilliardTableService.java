@@ -41,9 +41,8 @@ public class BilliardTableService implements IBilliardTableService {
 
     StoreRepo storeRepo;
 
-    String webUrl = "https://score-lens.vercel.app/";
+    String webUrl = "${$app.frontend.url}";
 
-    @PreAuthorize("hasRole('ADMIN') or hasAuthority('CREATE_TABLE')")
     @Override
     @Transactional
     public BilliardTableResponse createBilliardTable(BilliardTableRequest request) {
@@ -133,7 +132,6 @@ public class BilliardTableService implements IBilliardTableService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasRole('ADMIN') or hasAuthority('DELETE_TABLE')")
     public boolean deleteBilliardTable(String billiardTableID) {
         // Tìm table, nếu không có thì ném exception
         BilliardTable table = billiardTableRepo.findById(billiardTableID)
