@@ -25,38 +25,38 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
-  #Email:
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
+#  #Email:
+#  mail:
+#    host: smtp.gmail.com
+#    port: 587
+#    username: ${MAIL_USERNAME}
+#    password: ${MAIL_PASSWORD}
+#    properties:
+#      mail:
+#        smtp:
+#          auth: true
+#          starttls:
+#            enable: true
   # Cache Configuration
-  cache:
-    type: redis
+#  cache:
+#    type: redis
   # Redis Configuration
-  data:
-    redis:
-      host: ${REDIS_HOST}
-      port: ${REDIS_PORT}
-      password: ${REDIS_PASSWORD}
-      database: ${REDIS_DATABASE}
-      timeout: 10000ms
-      ssl:
-        enabled: false
-      lettuce:
-        pool:
-          max-active: 8
-          max-idle: 8
-          min-idle: 0
-          max-wait: -1ms
-        shutdown-timeout: 100ms
+#  data:
+#    redis:
+#      host: ${REDIS_HOST}
+#      port: ${REDIS_PORT}
+#      password: ${REDIS_PASSWORD}
+#      database: ${REDIS_DATABASE}
+#      timeout: 10000ms
+#      ssl:
+#        enabled: false
+#      lettuce:
+#        pool:
+#          max-active: 8
+#          max-idle: 8
+#          min-idle: 0
+#          max-wait: -1ms
+#        shutdown-timeout: 100ms
 
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
