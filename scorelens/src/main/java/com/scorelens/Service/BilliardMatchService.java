@@ -8,22 +8,26 @@ import com.scorelens.Exception.AppException;
 import com.scorelens.Exception.ErrorCode;
 import com.scorelens.Mapper.BilliardMatchMapper;
 import com.scorelens.Repository.*;
+import com.scorelens.Service.Filter.BaseSpecificationService;
 import com.scorelens.Service.Interface.IBilliardMatchService;
 import com.scorelens.Service.KafkaService.KafkaProducer;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.function.Function;
 
 @Slf4j
 @Service
-public class BilliardMatchService implements IBilliardMatchService {
+public class BilliardMatchService extends BaseSpecificationService<BilliardMatch, BilliardMatchResponse> implements IBilliardMatchService {
     @Autowired
     private BilliardMatchRepository repository;
     @Autowired
@@ -68,6 +72,21 @@ public class BilliardMatchService implements IBilliardMatchService {
 
     @Autowired
     KafkaProducer producer;
+
+    @Override
+    protected JpaSpecificationExecutor<BilliardMatch> getRepository() {
+        return repository;
+    }
+
+    @Override
+    protected Function<BilliardMatch, BilliardMatchResponse> getMapper() {
+        return billiardMatchMapper::toBilliardMatchResponse;
+    }
+
+    @Override
+    protected Specification<BilliardMatch> buildSpecification(Map<String, Object> filters) {
+        return null;
+    }
 
 
     @Override
