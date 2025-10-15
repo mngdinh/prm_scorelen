@@ -23,9 +23,8 @@ public class Player {
     @JoinColumn(name = "teamID", nullable = false)
     private Team team;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "customerID")
-    private Customer customer;
+    @Column(name = "customerID")
+    private String customerID;
 
     @Column(name = "name", length = 50)
     private String name;

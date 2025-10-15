@@ -8,32 +8,34 @@ import com.scorelens.Exception.AppException;
 import com.scorelens.Exception.ErrorCode;
 import com.scorelens.Mapper.BilliardMatchMapper;
 import com.scorelens.Repository.*;
+import com.scorelens.Service.Filter.BaseSpecificationService;
 import com.scorelens.Service.Interface.IBilliardMatchService;
 import com.scorelens.Service.KafkaService.KafkaProducer;
+import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.function.Function;
 
 @Slf4j
 @Service
-public class BilliardMatchService implements IBilliardMatchService {
+public class BilliardMatchService extends BaseSpecificationService<BilliardMatch, BilliardMatchResponse> implements IBilliardMatchService {
     @Autowired
     private BilliardMatchRepository repository;
     @Autowired
     private BilliardTableRepo tableRepo;
     @Autowired
     private ModeRepository modeRepo;
-    @Autowired
-    private StaffRepository staffRepo;
-    @Autowired
-    private CustomerRepo customerRepo;
     @Autowired
     private TeamRepository teamRepo;
     @Autowired
@@ -73,6 +75,69 @@ public class BilliardMatchService implements IBilliardMatchService {
     @Autowired
     KafkaProducer producer;
 
+    @Override
+    protected JpaSpecificationExecutor<BilliardMatch> getRepository() {
+        return repository;
+    }
+
+    @Override
+    protected Function<BilliardMatch, BilliardMatchResponse> getMapper() {
+        return billiardMatchMapper::toBilliardMatchResponse;
+    }
+
+    @Override
+    protected Specification<BilliardMatch> buildSpecification(Map<String, Object> filters) {
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            String queryType = (String) filters.get("queryType");
+            String tableID = (String) filters.get("tableId");
+            Integer matchId = (Integer) filters.get("matchId");
+            String customerId = (String) filters.get("customerId");
+            String staffId = (String) filters.get("staffId");
+            Integer playerId = (Integer) filters.get("playerId");
+            Date date = (Date) filters.get("date");
+            String status = (String) filters.get("status");
+            Integer modeID = (Integer) filters.get("modeID");
+
+            if ("byTable".equals(queryType) && tableID != null && !tableID.isEmpty()) {
+                predicates.add(cb.equal(root.get("billardTable").get("billardTableID"), tableID));
+            }
+
+            if ("byId".equals(queryType) && matchId != null) {
+                predicates.add(cb.equal(root.get("billiardMatchID"), matchId));
+            }
+
+            if ("byCustomer".equals(queryType) && customerId != null) {
+                predicates.add(cb.equal(root.get("customerID"), customerId));
+            }
+
+            if ("byStaff".equals(queryType) && staffId != null) {
+                predicates.add(cb.equal(root.get("staffID"), staffId));
+            }
+
+            if ("byPlayer".equals(queryType) && playerId != null) {
+                predicates.add(cb.equal(root.get("players"), playerId));
+            }
+
+            if (status != null && !status.isEmpty()) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+
+            if (modeID != null) {
+                predicates.add(cb.equal(root.get("mode").get("modeID"), modeID));
+            }
+
+            if (date != null) {
+                // so sánh theo ngày (bỏ giờ)
+                Expression<Date> dateExpr = cb.function("DATE", Date.class, root.get("startTime"));
+                predicates.add(cb.equal(dateExpr, date));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+
 
     @Override
     public BilliardMatchResponse getById(Integer id) {
@@ -91,17 +156,13 @@ public class BilliardMatchService implements IBilliardMatchService {
 
     @Override
     public List<BilliardMatchResponse> getByCustomer(String id){
-        Customer customer = customerRepo.findById(id)
-                .orElseThrow(() -> new AppException(ErrorCode.MODE_NOT_FOUND));
-        List<BilliardMatch> matchs = repository.findByCustomer_CustomerID(id);
+        List<BilliardMatch> matchs = repository.findBycustomerID(id);
         return billiardMatchMapper.toBilliardMatchResponses(matchs);
     }
 
     @Override
     public List<BilliardMatchResponse> getByStaff(String id){
-        Staff staff = staffRepo.findById(id)
-                .orElseThrow(() -> new AppException(ErrorCode.MODE_NOT_FOUND));
-        List<BilliardMatch> matchs = repository.findByStaff_StaffID(id);
+        List<BilliardMatch> matchs = repository.findBystaffID(id);
         return billiardMatchMapper.toBilliardMatchResponses(matchs);
     }
 
@@ -115,8 +176,6 @@ public class BilliardMatchService implements IBilliardMatchService {
 
     @Override
     public List<BilliardMatchResponse> getByCustomerID(String id) {
-        Customer customer = customerRepo.findById(id)
-                .orElseThrow(() -> new AppException(ErrorCode.MATCH_NOT_FOUND));
         List<BilliardMatch> matchs = repository.findByCustomerId(id);
         return billiardMatchMapper.toBilliardMatchResponses(matchs);
     }
@@ -139,12 +198,10 @@ public class BilliardMatchService implements IBilliardMatchService {
             }
             Mode mode = modeRepo.findById(request.getModeID())
                     .orElseThrow(() -> new AppException(ErrorCode.MODE_NOT_FOUND));
-            Customer customer = customerRepo.findById(request.getCustomerID())
-                    .orElseThrow(() -> new AppException(ErrorCode.MATCH_NOT_FOUND));
             match.setBillardTable(table);
             match.setMode(mode);
-            match.setStaff(null);
-            match.setCustomer(customer);
+            match.setStaffID(null);
+            match.setCustomerID(request.getCustomerID());
         }
         if (request.getCustomerID() == null) {
             BilliardTable table = tableRepo.findById(request.getBilliardTableID())
@@ -154,13 +211,11 @@ public class BilliardMatchService implements IBilliardMatchService {
             }
             Mode mode = modeRepo.findById(request.getModeID())
                     .orElseThrow(() -> new AppException(ErrorCode.MODE_NOT_FOUND));
-            Staff staff = staffRepo.findById(request.getStaffID())
-                    .orElseThrow(() -> new AppException(ErrorCode.MATCH_NOT_FOUND));
 
             match.setBillardTable(table);
             match.setMode(mode);
-            match.setStaff(staff);
-            match.setCustomer(null);
+            match.setStaffID(request.getStaffID());
+            match.setCustomerID(null);
         }
 
         match.setTotalSet(request.getTotalSet());

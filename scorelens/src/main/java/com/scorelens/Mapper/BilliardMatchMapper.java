@@ -24,14 +24,14 @@ public interface BilliardMatchMapper {
 
     @Mapping(target = "billiardTableID", source = "billardTable.billardTableID")
     @Mapping(target = "modeID", source = "mode.modeID")
-    @Mapping(target = "byStaff", source = "staff.staffID")
-    @Mapping(target = "byCustomer", source = "customer.customerID")
+    @Mapping(target = "byStaff", source = "staffID")
+    @Mapping(target = "byCustomer", source = "customerID")
     BilliardMatchResponse toBilliardMatchResponse(BilliardMatch match);
 
     @Mapping(target = "billiardTableID", source = "billardTable.billardTableID")
     @Mapping(target = "modeID", source = "mode.modeID")
-    @Mapping(target = "byStaff", source = "staff.staffID")
-    @Mapping(target = "byCustomer", source = "customer.customerID")
+    @Mapping(target = "byStaff", source = "staffID")
+    @Mapping(target = "byCustomer", source = "customerID")
     List<BilliardMatchResponse> toBilliardMatchResponses(List<BilliardMatch> matchs);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

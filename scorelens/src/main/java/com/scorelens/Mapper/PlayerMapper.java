@@ -21,11 +21,11 @@ public interface PlayerMapper {
 //    List<PlayerResponse> toDto(List<Player> players);
 
     @Mapping(target = "teamID", expression = "java(player.getTeam() != null ? player.getTeam().getTeamID() : null)")
-    @Mapping(target = "customerID", expression = "java(player.getCustomer() != null ? player.getCustomer().getCustomerID() : null)")
+    @Mapping(target = "customerID")
     PlayerResponse toDto(Player player);
 
     @Mapping(target = "teamID", expression = "java(player.getTeam() != null ? player.getTeam().getTeamID() : null)")
-    @Mapping(target = "customerID", expression = "java(player.getCustomer() != null ? player.getCustomer().getCustomerID() : null)")
+    @Mapping(target = "customerID", expression = "java(player.getCustomerID() : null)")
     List<PlayerResponse> toDto(List<Player> players);
 
 

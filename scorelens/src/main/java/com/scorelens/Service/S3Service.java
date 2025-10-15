@@ -245,7 +245,7 @@ public class S3Service {
         return String.format("https://%s.s3.%s.amazonaws.com/%s",
                 bucketName,
                 region.id(),
-                buildKey(keyName));
+                keyName);
     }
 
     // Update - Overwrite the existing file by uploading a new one with the same key
