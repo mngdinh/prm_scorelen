@@ -9,7 +9,6 @@ import com.scorelens.Enums.ResultStatus;
 import com.scorelens.Exception.AppException;
 import com.scorelens.Exception.ErrorCode;
 import com.scorelens.Mapper.PlayerMapper;
-import com.scorelens.Repository.CustomerRepo;
 import com.scorelens.Repository.PlayerRepo;
 import com.scorelens.Repository.TeamRepository;
 import com.scorelens.Service.Interface.IPlayerService;
@@ -18,9 +17,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
-
-import static org.eclipse.collections.impl.block.factory.StringPredicates.matches;
 
 @Service
 public class PlayerService implements IPlayerService {
@@ -29,8 +25,7 @@ public class PlayerService implements IPlayerService {
     PlayerRepo playerRepo;
     @Autowired
     TeamRepository teamRepo;
-    @Autowired
-    CustomerRepo customerRepo;
+
 
     @Autowired
     PlayerMapper playerMapper;
@@ -65,7 +60,7 @@ public class PlayerService implements IPlayerService {
         player.setStatus(ResultStatus.draw);
         player.setTotalScore(0);
         player.setCreateAt(LocalDateTime.now());
-        player.setCustomer(null);
+        player.setCustomerID(null);
         return playerRepo.save(player);
     }
 
@@ -77,9 +72,7 @@ public class PlayerService implements IPlayerService {
         player.setName(request.getName());
         player.setStatus(request.getStatus());
         player.setTotalScore(request.getTotalScore());
-        Customer customer = customerRepo.findById(request.getCustomerID())
-                .orElseThrow(() -> new AppException(ErrorCode.MATCH_NOT_FOUND));
-        player.setCustomer(customer);
+        player.setCustomerID(request.getCustomerID());
         return playerMapper.toDto(playerRepo.save(player));
     }
 
@@ -103,29 +96,28 @@ public class PlayerService implements IPlayerService {
                 .orElseThrow(() -> new AppException(ErrorCode.PLAYER_NOT_FOUND));
         Team team = player.getTeam();
         BilliardMatch match = team.getBilliardMatch();
-        if (player.getCustomer() != null) {
+        if (player.getCustomerID() != null) {
             throw new AppException(ErrorCode.PLAYER_SAVED);
         }
         for (Team t : match.getTeams()) {
             for (Player p : t.getPlayers()) {
-                if (p.getCustomer() != null &&
-                        (request.getInfo().equals(p.getCustomer().getEmail()) ||
-                                request.getInfo().equals(p.getCustomer().getPhoneNumber()))) {
+                if (p.getCustomerID() != null &&
+                        request.getInfo().equals(p.getCustomerID()) ) {
                     throw new AppException(ErrorCode.CUSTOMER_SAVED);
                 }
             }
         }
-        if (request.getInfo().matches("\\d+")){
-            Customer c = customerRepo.findByPhoneNumber(request.getInfo())
-                    .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXIST));
-            player.setCustomer(c);
-            player.setName(c.getName());
-        }else{
-            Customer c = customerRepo.findByEmail(request.getInfo())
-                    .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXIST));
-            player.setCustomer(c);
-            player.setName(c.getName());
-        }
+//        if (request.getInfo().matches("\\d+")){
+//            Customer c = customerRepo.findByPhoneNumber(request.getInfo())
+//                    .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXIST));
+//            player.setCustomer(c);
+//            player.setName(c.getName());
+//        }else{
+//            Customer c = customerRepo.findByEmail(request.getInfo())
+//                    .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXIST));
+//            player.setCustomer(c);
+//            player.setName(c.getName());
+//        }
         return playerMapper.toDto(playerRepo.save(player));
     }
 

@@ -1,8 +1,10 @@
 package com.scorelens.Service;
 
 import com.scorelens.DTOs.Request.BilliardTableRequest;
+import com.scorelens.DTOs.Request.PageableRequestDto;
 import com.scorelens.DTOs.Response.BilliardMatchResponse;
 import com.scorelens.DTOs.Response.BilliardTableResponse;
+import com.scorelens.DTOs.Response.PageableResponseDto;
 import com.scorelens.Entity.BilliardTable;
 import com.scorelens.Entity.Store;
 import com.scorelens.Enums.TableStatus;
@@ -11,11 +13,20 @@ import com.scorelens.Exception.ErrorCode;
 import com.scorelens.Mapper.BilliardTableMapper;
 import com.scorelens.Repository.BilliardTableRepo;
 import com.scorelens.Repository.StoreRepo;
+import com.scorelens.Service.Filter.BaseSpecificationService;
 import com.scorelens.Service.Interface.IBilliardTableService;
+import jakarta.persistence.criteria.Predicate;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
@@ -23,27 +34,65 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 
 @Service
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 @Slf4j
-public class BilliardTableService implements IBilliardTableService {
+public class BilliardTableService extends BaseSpecificationService<BilliardTable, BilliardTableResponse > implements IBilliardTableService {
 
-    BilliardTableRepo billiardTableRepo;
+    private final BilliardTableRepo billiardTableRepo;
 
-    BilliardTableMapper billiardTableMapper;
+    private final BilliardTableMapper billiardTableMapper;
 
-    S3Service s3Service;
+    private final S3Service s3Service;
 
-    QRCodeService qrCodeService;
+    private final QRCodeService qrCodeService;
 
-    StoreRepo storeRepo;
+    private final StoreRepo storeRepo;
 
-    String webUrl = "https://score-lens.vercel.app/";
+    @Value("${app.frontend.url}")
+    private String webUrl;
 
-    @PreAuthorize("hasRole('ADMIN') or hasAuthority('CREATE_TABLE')")
+
+    @Override
+    protected JpaSpecificationExecutor<BilliardTable> getRepository() {
+        return billiardTableRepo;
+    }
+
+    @Override
+    protected Function<BilliardTable, BilliardTableResponse> getMapper() {
+        return billiardTableMapper::toBilliardTableResponse;
+    }
+
+    @Override
+    protected Specification<BilliardTable> buildSpecification(Map<String, Object> filters) {
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            String tableId = (String) filters.get("tableId");
+            String storeId = (String) filters.get("storeId");
+            String status = (String) filters.get("status");
+
+            if (tableId != null && !tableId.isEmpty()) {
+                predicates.add(cb.equal(root.get("billiardTableID"), tableId));
+            }
+
+            if (storeId != null && !storeId.isEmpty()) {
+                predicates.add(cb.equal(root.get("store").get("storeID"), storeId));
+            }
+
+            if (status != null && !status.isEmpty()) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+
     @Override
     @Transactional
     public BilliardTableResponse createBilliardTable(BilliardTableRequest request) {
@@ -133,7 +182,6 @@ public class BilliardTableService implements IBilliardTableService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasRole('ADMIN') or hasAuthority('DELETE_TABLE')")
     public boolean deleteBilliardTable(String billiardTableID) {
         // Tìm table, nếu không có thì ném exception
         BilliardTable table = billiardTableRepo.findById(billiardTableID)
@@ -209,6 +257,9 @@ public class BilliardTableService implements IBilliardTableService {
             throw new RuntimeException("Failed to generate and upload QR code: " + e.getMessage());
         }
     }
+
+
+
 
 
 }

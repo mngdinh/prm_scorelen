@@ -1,5 +1,6 @@
 package com.scorelens.DTOs.Request;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -8,15 +9,15 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class PageableRequestDto {
     @Builder.Default
     int page = 0; // Page number (0-based)
     
     @Builder.Default
     int size = 10; // Page size
-    
-    @Builder.Default
-    String sortBy = "createAt"; // Sort field
+
+    String sortBy; // Sort field
     
     @Builder.Default
     String sortDirection = "desc"; // Sort direction: asc, desc
