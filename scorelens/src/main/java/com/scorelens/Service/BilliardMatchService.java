@@ -11,6 +11,8 @@ import com.scorelens.Repository.*;
 import com.scorelens.Service.Filter.BaseSpecificationService;
 import com.scorelens.Service.Interface.IBilliardMatchService;
 import com.scorelens.Service.KafkaService.KafkaProducer;
+import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -85,7 +87,55 @@ public class BilliardMatchService extends BaseSpecificationService<BilliardMatch
 
     @Override
     protected Specification<BilliardMatch> buildSpecification(Map<String, Object> filters) {
-        return null;
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            String queryType = (String) filters.get("queryType");
+            String tableID = (String) filters.get("tableId");
+            Integer matchId = (Integer) filters.get("matchId");
+            String customerId = (String) filters.get("customerId");
+            String staffId = (String) filters.get("staffId");
+            Integer playerId = (Integer) filters.get("playerId");
+            Date date = (Date) filters.get("date");
+            String status = (String) filters.get("status");
+            Integer modeID = (Integer) filters.get("modeID");
+
+            if ("byTable".equals(queryType) && tableID != null && !tableID.isEmpty()) {
+                predicates.add(cb.equal(root.get("billardTable").get("billardTableID"), tableID));
+            }
+
+            if ("byId".equals(queryType) && matchId != null) {
+                predicates.add(cb.equal(root.get("billiardMatchID"), matchId));
+            }
+
+            if ("byCustomer".equals(queryType) && customerId != null) {
+                predicates.add(cb.equal(root.get("customerID"), customerId));
+            }
+
+            if ("byStaff".equals(queryType) && staffId != null) {
+                predicates.add(cb.equal(root.get("staffID"), staffId));
+            }
+
+            if ("byPlayer".equals(queryType) && playerId != null) {
+                predicates.add(cb.equal(root.get("players"), playerId));
+            }
+
+            if (status != null && !status.isEmpty()) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+
+            if (modeID != null) {
+                predicates.add(cb.equal(root.get("mode").get("modeID"), modeID));
+            }
+
+            if (date != null) {
+                // so sánh theo ngày (bỏ giờ)
+                Expression<Date> dateExpr = cb.function("DATE", Date.class, root.get("startTime"));
+                predicates.add(cb.equal(dateExpr, date));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
     }
 
 

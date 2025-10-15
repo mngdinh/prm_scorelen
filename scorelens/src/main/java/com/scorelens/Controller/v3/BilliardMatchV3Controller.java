@@ -2,10 +2,7 @@ package com.scorelens.Controller.v3;
 
 import com.scorelens.Controller.v1.GameSetV1Controller;
 import com.scorelens.DTOs.Request.*;
-import com.scorelens.DTOs.Response.BilliardMatchResponse;
-import com.scorelens.DTOs.Response.GameSetResponse;
-import com.scorelens.DTOs.Response.NotificationResponse;
-import com.scorelens.DTOs.Response.TeamResponse;
+import com.scorelens.DTOs.Response.*;
 import com.scorelens.Entity.BilliardMatch;
 import com.scorelens.Entity.ResponseObject;
 import com.scorelens.Enums.*;
@@ -13,6 +10,7 @@ import com.scorelens.Service.*;
 import com.scorelens.Service.KafkaService.KafkaProducer;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +21,9 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Tag(name = "Billiard Match V3", description = "Unified Billiard Match API")
@@ -59,16 +59,23 @@ public class BilliardMatchV3Controller {
             description = "Unified API that combines all GET operations from v1 controller")
     @GetMapping
     public ResponseObject getBilliardMatches(
-            @Parameter(description = "Query type: byId, byCustomer, byStaff, byPlayer, byCreatorCustomer, byCreatorStaff, filter")
-            @RequestParam(required = false, defaultValue = "filter") String queryType,
+            @Parameter(description = "Query type: byId, byCustomer, byStaff, byPlayer, filter, byTable",
+                    required = true,
+                    schema = @Schema(
+                            allowableValues = {"byTable", "byId", "byCustomer", "byStaff", "byPlayer",}
+                    ))
+            @RequestParam(defaultValue = "byTable") String queryType,
+
+            @Parameter(description = "Table ID (required for queryType=byTable)")
+            @RequestParam(required = false) String tableId,
 
             @Parameter(description = "Match ID (required for queryType=byId)")
             @RequestParam(required = false) Integer matchId,
 
-            @Parameter(description = "Customer ID (required for queryType=byCustomer or byCreatorCustomer)")
+            @Parameter(description = "Customer ID (required for queryType=byCustomer or byCustomer)")
             @RequestParam(required = false) String customerId,
 
-            @Parameter(description = "Staff ID (required for queryType=byStaff or byCreatorStaff)")
+            @Parameter(description = "Staff ID (required for queryType=byStaff or byStaff)")
             @RequestParam(required = false) String staffId,
 
             @Parameter(description = "Player ID (required for queryType=byPlayer)")
@@ -84,102 +91,42 @@ public class BilliardMatchV3Controller {
             @RequestParam(required = false) Integer modeID,
 
             @Parameter(description = "Page number (1-based)")
-            @RequestParam(required = false, defaultValue = "1") Integer page,
+            @RequestParam(required = true, defaultValue = "1") Integer page,
 
             @Parameter(description = "Page size")
-            @RequestParam(required = false, defaultValue = "10") Integer size,
+            @RequestParam(required = true, defaultValue = "10") Integer size,
 
             @Parameter(description = "Sort field")
-            @RequestParam(required = false, defaultValue = "startTime") String sortBy,
+            @RequestParam(required = true, defaultValue = "startTime") String sortBy,
 
             @Parameter(description = "Sort direction (asc/desc)")
-            @RequestParam(required = false, defaultValue = "desc") String sortDirection
+            @RequestParam(required = true, defaultValue = "desc") String sortDirection
     ) {
-        try {
-            Object data;
-            String message;
+        PageableRequestDto req = PageableRequestDto.builder()
+                .page(page)
+                .size(size)
+                .sortBy(sortBy)
+                .sortDirection(sortDirection)
+                .build();
 
-            switch (queryType.toLowerCase()) {
-                case "byid":
-                    if (matchId == null) {
-                        return ResponseObject.builder()
-                                .status(400)
-                                .message("Match ID is required for queryType=byId")
-                                .build();
-                    }
-                    data = billiardMatchService.getById(matchId);
-                    message = "Get Match information successfully";
-                    break;
+        Map<String, Object> filters = new HashMap<>();
+        if (tableId != null && !"null".equals(tableId)) filters.put("tableId", tableId);
+        if (queryType != null && !"null".equals(queryType)) filters.put("queryType", queryType);
+        if (matchId != null) filters.put("matchId", matchId);
+        if (customerId != null && !"null".equals(customerId)) filters.put("customerId", customerId);
+        if (staffId != null && !"null".equals(staffId)) filters.put("staffId", staffId);
+        if (playerId != null) filters.put("playerId", playerId);
+        if (date != null) filters.put("date", date);
+        if (status != null && !"null".equals(status)) filters.put("status", status);
+        if (modeID != null) filters.put("modeID", modeID);
 
-                case "bycustomer":
-                    if (customerId == null) {
-                        return ResponseObject.builder()
-                                .status(400)
-                                .message("Customer ID is required for queryType=byCustomer")
-                                .build();
-                    }
-                    data = billiardMatchService.getByCustomerID(customerId);
-                    message = "Get Matches by customer successfully";
-                    break;
+        PageableResponseDto<BilliardMatchResponse> data = billiardMatchService.getAll(req, filters);
 
-                case "bycreatorcustomer":
-                    if (customerId == null) {
-                        return ResponseObject.builder()
-                                .status(400)
-                                .message("Customer ID is required for queryType=byCreatorCustomer")
-                                .build();
-                    }
-                    data = billiardMatchService.getByCustomer(customerId);
-                    message = "Get Matches by creator customer successfully";
-                    break;
-
-                case "bystaff":
-                case "bycreatorstaff":
-                    if (staffId == null) {
-                        return ResponseObject.builder()
-                                .status(400)
-                                .message("Staff ID is required for queryType=byStaff or byCreatorStaff")
-                                .build();
-                    }
-                    data = billiardMatchService.getByStaff(staffId);
-                    message = "Get Matches by staff successfully";
-                    break;
-
-                case "byplayer":
-                    if (playerId == null) {
-                        return ResponseObject.builder()
-                                .status(400)
-                                .message("Player ID is required for queryType=byPlayer")
-                                .build();
-                    }
-                    data = billiardMatchService.getByPlayerID(playerId);
-                    message = "Get Match by player successfully";
-                    break;
-
-                case "filter":
-                default:
-                    MatchFilterRequest filterRequest = new MatchFilterRequest();
-                    filterRequest.setDate(date);
-                    filterRequest.setStatus(status);
-                    filterRequest.setModeID(modeID);
-                    data = billiardMatchService.getFilter(filterRequest);
-                    message = "Get filtered Matches successfully";
-                    break;
-            }
-
-            return ResponseObject.builder()
-                    .status(1000)
-                    .message(message)
-                    .data(data)
-                    .build();
-
-        } catch (Exception e) {
-            log.error("Error in getBilliardMatches: ", e);
-            return ResponseObject.builder()
-                    .status(500)
-                    .message("Internal server error: " + e.getMessage())
-                    .build();
-        }
+        return ResponseObject.builder()
+                .status(1000)
+                .message("Success")
+                .data(data)
+                .build();
     }
 
     @PostMapping
