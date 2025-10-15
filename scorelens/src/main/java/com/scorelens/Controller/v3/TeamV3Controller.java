@@ -1,5 +1,6 @@
 package com.scorelens.Controller.v3;
 
+import com.scorelens.DTOs.Request.PageableRequestDto;
 import com.scorelens.DTOs.Request.TeamCreateRequest;
 import com.scorelens.DTOs.Request.TeamUpdateRequest;
 import com.scorelens.DTOs.Request.TeamV3Request;
@@ -8,6 +9,7 @@ import com.scorelens.Entity.ResponseObject;
 import com.scorelens.Service.TeamService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +18,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Tag(name = "Team V3", description = "Unified Team API")
@@ -30,82 +34,58 @@ public class TeamV3Controller {
     @Autowired
     TeamService teamService;
 
-    @Operation(summary = "Get teams with unified parameters", 
-               description = "Unified API that combines all GET operations from v1 controller")
     @GetMapping
     public ResponseObject getTeams(
-            @Parameter(description = "Query type: all, byId, byMatch")
-            @RequestParam(required = false, defaultValue = "all") String queryType,
+            @Parameter(description = "Query type: all, byId, byMatch",
+                    required = true,
+                    schema = @Schema(
+                            allowableValues = {"all", "byId", "byMatch"}
+                    ))
+            @RequestParam(defaultValue = "all") String queryType,
             
             @Parameter(description = "Team ID (required for queryType=byId)")
             @RequestParam(required = false) Integer teamId,
             
             @Parameter(description = "Match ID (required for queryType=byMatch)")
             @RequestParam(required = false) Integer matchId,
-            
-            @Parameter(description = "Page number (1-based)")
-            @RequestParam(required = false, defaultValue = "1") Integer page,
-            
-            @Parameter(description = "Page size")
-            @RequestParam(required = false, defaultValue = "10") Integer size,
-            
-            @Parameter(description = "Sort field")
-            @RequestParam(required = false, defaultValue = "createAt") String sortBy,
-            
-            @Parameter(description = "Sort direction (asc/desc)")
-            @RequestParam(required = false, defaultValue = "desc") String sortDirection
-    ) {
-        try {
-            Object data;
-            String message;
-            
-            switch (queryType.toLowerCase()) {
-                case "all":
-                    data = teamService.getAllTeams();
-                    message = "Get Team list";
-                    break;
 
-                case "byid":
-                    if (teamId == null) {
-                        return ResponseObject.builder()
-                                .status(400)
-                                .message("Team ID is required for queryType=byId")
-                                .build();
-                    }
-                    data = teamService.getById(teamId);
-                    message = "Get Team information successfully";
-                    break;
-                    
-                case "bymatch":
-                    if (matchId == null) {
-                        return ResponseObject.builder()
-                                .status(400)
-                                .message("Match ID is required for queryType=byMatch")
-                                .build();
-                    }
-                    data = teamService.getByMatchID(matchId);
-                    message = "Get Teams information successfully";
-                    break;
-                    
-                default:
-                    return ResponseObject.builder()
-                            .status(400)
-                            .message("Invalid queryType. Valid values: all, byId, byMatch")
-                            .build();
-            }
-            return ResponseObject.builder()
-                    .status(1000)
-                    .message(message)
-                    .data(data)
-                    .build();
-                    
-        } catch (Exception e) {
-            log.error("Error in getTeams: ", e);
-            return ResponseObject.builder()
-                    .status(500)
-                    .message("Internal server error: " + e.getMessage())
-                    .build();
-        }
+            @Parameter(description = "Page number (1-based)", required = true)
+            @RequestParam(required = false, defaultValue = "1") Integer page,
+
+            @Parameter(description = "Page size", required = true)
+            @RequestParam(required = false, defaultValue = "10") Integer size,
+
+            @Parameter(description = "Sort field",
+                    required = true,
+                    schema = @Schema(
+                            allowableValues = {"createAt", "teamID"}
+                    ))
+            @RequestParam(defaultValue = "createAt") String sortBy,
+
+            @Parameter(description = "Sort direction (asc/desc)",
+                    required = true,
+                    schema = @Schema(
+                            allowableValues = {"desc", "asc"}
+                    ))
+            @RequestParam(defaultValue = "desc") String sortDirection
+    ) {
+        PageableRequestDto req = PageableRequestDto.builder()
+                .page(page)
+                .size(size)
+                .sortBy(sortBy)
+                .sortDirection(sortDirection)
+                .build();
+
+        Map<String, Object> filters = new HashMap<>();
+        filters.put("queryType", queryType);
+        if (teamId != null) filters.put("teamId", teamId);
+        if (matchId != null) filters.put("matchId", matchId);
+
+        return ResponseObject.builder()
+                .status(1000)
+                .message("Store List")
+                .data(teamService.getAll(req, filters))
+                .build();
     }
 
     @PostMapping

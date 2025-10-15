@@ -15,15 +15,22 @@ import com.scorelens.Mapper.TeamMapper;
 import com.scorelens.Repository.BilliardMatchRepository;
 import com.scorelens.Repository.PlayerRepo;
 import com.scorelens.Repository.TeamRepository;
+import com.scorelens.Service.Filter.BaseSpecificationService;
 import com.scorelens.Service.Interface.ITeamService;
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 
 @Service
-public class TeamService implements ITeamService {
+public class TeamService extends BaseSpecificationService<Team, TeamResponse> implements ITeamService {
 
     @Autowired
     private TeamRepository teamRepository;
@@ -39,6 +46,35 @@ public class TeamService implements ITeamService {
     TeamMapper teamMapper;
     @Autowired
     private TeamSetService teamSetService;
+
+    @Override
+    protected JpaSpecificationExecutor<Team> getRepository() {
+        return teamRepository;
+    }
+
+    @Override
+    protected Function<Team, TeamResponse> getMapper() {
+        return teamMapper::toTeamResponse;
+    }
+
+    @Override
+    protected Specification<Team> buildSpecification(Map<String, Object> filters) {
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            String queryType = (String) filters.get("queryType");
+            Integer teamId = (Integer) filters.get("teamId");
+            Integer matchId = (Integer) filters.get("matchId");
+
+            if ("byId".equals(queryType))
+                predicates.add(cb.equal(root.get("teamID"), teamId));
+
+            if ("byMatch".equals(queryType))
+                predicates.add(cb.equal(root.get("billiardMatch").get("billiardMatchID"), matchId));
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+    }
 
     @Override
     public List<TeamResponse> getAllTeams() {

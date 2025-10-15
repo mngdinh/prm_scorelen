@@ -43,9 +43,9 @@ public abstract class BaseSpecificationService<T, R> {
 
         return PageableResponseDto.<R>builder()
                 .content(responses)
-                .page(page.getNumber() + 1)
-                .size(page.getSize())
-                .totalElements(page.getTotalElements())
+                .currentPage(page.getNumber() + 1)
+                .pageSizes(page.getSize())
+                .totalItems(page.getTotalElements())
                 .totalPages(page.getTotalPages())
                 .build();
     }

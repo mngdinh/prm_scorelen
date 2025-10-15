@@ -45,10 +45,6 @@ public class BilliardTableV3Controller {
     @Autowired
     BilliardMatchService billiardMatchService;
 
-
-
-    @Operation(summary = "Get billiard tables with unified parameters",
-            description = "Unified API that combines all GET operations from v1 controller")
     @GetMapping
     public ResponseObject getBilliardTables(
             @Parameter(description = "Query type: all, byId, byStore",
@@ -71,10 +67,10 @@ public class BilliardTableV3Controller {
                     ))
             @RequestParam(defaultValue = "null") String status,
 
-            @Parameter(description = "Page number (1-based)")
+            @Parameter(description = "Page number (1-based)", required = true)
             @RequestParam(required = false, defaultValue = "1") Integer page,
 
-            @Parameter(description = "Page size")
+            @Parameter(description = "Page size", required = true)
             @RequestParam(required = false, defaultValue = "10") Integer size,
 
             @Parameter(description = "Sort By",

@@ -3,12 +3,14 @@ package com.scorelens.Controller.v3;
 import com.scorelens.DTOs.Request.GameSetCreateRequest;
 import com.scorelens.DTOs.Request.GameSetUpdateRequest;
 import com.scorelens.DTOs.Request.GameSetV3Request;
+import com.scorelens.DTOs.Request.PageableRequestDto;
 import com.scorelens.DTOs.Response.GameSetResponse;
 import com.scorelens.Entity.GameSet;
 import com.scorelens.Entity.ResponseObject;
 import com.scorelens.Service.GameSetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +19,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Tag(name = "Game Set V3", description = "Unified Game Set API")
@@ -31,12 +35,14 @@ public class GameSetV3Controller {
     @Autowired
     GameSetService gameSetService;
 
-    @Operation(summary = "Get game sets with unified parameters", 
-               description = "Unified API that combines all GET operations from v1 controller")
     @GetMapping
     public ResponseObject getGameSets(
-            @Parameter(description = "Query type: all, byId, byMatch")
-            @RequestParam(required = false, defaultValue = "all") String queryType,
+            @Parameter(description = "Query type: byId, byMatch",
+                    required = true,
+                    schema = @Schema(
+                            allowableValues = {"byMatch", "byId"}
+                    ))
+            @RequestParam(defaultValue = "all") String queryType,
             
             @Parameter(description = "Game Set ID (required for queryType=byId)")
             @RequestParam(required = false) Integer gameSetId,
@@ -44,61 +50,43 @@ public class GameSetV3Controller {
             @Parameter(description = "Match ID (required for queryType=byMatch)")
             @RequestParam(required = false) Integer matchId,
             
-            @Parameter(description = "Page number (1-based)")
+            @Parameter(description = "Page number (1-based)", required = true)
             @RequestParam(required = false, defaultValue = "1") Integer page,
             
-            @Parameter(description = "Page size")
+            @Parameter(description = "Page size", required = true)
             @RequestParam(required = false, defaultValue = "10") Integer size,
             
-            @Parameter(description = "Sort field")
-            @RequestParam(required = false, defaultValue = "gameSetNo") String sortBy,
-            
-            @Parameter(description = "Sort direction (asc/desc)")
-            @RequestParam(required = false, defaultValue = "asc") String sortDirection
+            @Parameter(description = "Sort field",
+                    required = true,
+                    schema = @Schema(
+                            allowableValues = {"startTime", "endTime"}
+                    ))
+            @RequestParam(required = false, defaultValue = "startTime") String sortBy,
+
+            @Parameter(description = "Sort direction (asc/desc)",
+                    required = true,
+                    schema = @Schema(
+                            allowableValues = {"desc", "asc"}
+                    ))
+            @RequestParam(defaultValue = "desc") String sortDirection
     ) {
         try {
-            Object data;
-            String message;
-            
-            switch (queryType.toLowerCase()) {
-                case "all":
-                    data = gameSetService.getAllGameSets();
-                    message = "Get Game Set list";
-                    break;
+            PageableRequestDto req = PageableRequestDto.builder()
+                    .page(page)
+                    .size(size)
+                    .sortBy(sortBy)
+                    .sortDirection(sortDirection)
+                    .build();
 
-                case "byid":
-                    if (gameSetId == null) {
-                        return ResponseObject.builder()
-                                .status(400)
-                                .message("Game Set ID is required for queryType=byId")
-                                .build();
-                    }
-                    data = gameSetService.getById(gameSetId);
-                    message = "Get GameSet information successfully";
-                    break;
-                    
-                case "bymatch":
-                    if (matchId == null) {
-                        return ResponseObject.builder()
-                                .status(400)
-                                .message("Match ID is required for queryType=byMatch")
-                                .build();
-                    }
-                    data = gameSetService.getByMatchID(matchId);
-                    message = "Get Game Sets information successfully";
-                    break;
-                    
-                default:
-                    return ResponseObject.builder()
-                            .status(400)
-                            .message("Invalid queryType. Valid values: all, byId, byMatch")
-                            .build();
-            }
-            
+            Map<String, Object> filters = new HashMap<>();
+            filters.put("queryType", queryType);
+            if (gameSetId != null) filters.put("gameSetId", gameSetId);
+            if (matchId != null) filters.put("matchId", matchId);
+
             return ResponseObject.builder()
                     .status(1000)
-                    .message(message)
-                    .data(data)
+                    .message("Success")
+                    .data(gameSetService.getAll(req, filters))
                     .build();
                     
         } catch (Exception e) {

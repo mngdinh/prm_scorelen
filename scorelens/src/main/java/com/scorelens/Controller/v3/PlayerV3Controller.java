@@ -1,13 +1,11 @@
 package com.scorelens.Controller.v3;
 
-import com.scorelens.DTOs.Request.PlayerCreateRequest;
-import com.scorelens.DTOs.Request.PlayerV3UpdateRequest;
-import com.scorelens.DTOs.Request.PlayerUpdateRequest;
-import com.scorelens.DTOs.Request.CustomerSaveRequest;
+import com.scorelens.DTOs.Request.*;
 import com.scorelens.Entity.ResponseObject;
 import com.scorelens.Service.PlayerService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +13,9 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 @Tag(name = "Player V3", description = "Unified Player API")
@@ -28,83 +29,62 @@ public class PlayerV3Controller {
     @Autowired
     PlayerService playerService;
 
-    @Operation(summary = "Get players with unified parameters", 
-               description = "Unified API that combines all GET operations from v1 controller")
     @GetMapping
     public ResponseObject getPlayers(
-            @Parameter(description = "Query type: all, byId, byTeam")
-            @RequestParam(required = false, defaultValue = "all") String queryType,
+            @Parameter(description = "Query type: all, byId, byTeam, byCustomer",
+                    required = true,
+                    schema = @Schema(
+                            allowableValues = {"all", "byId", "byTeam", "byCustomer"}
+                    ))
+            @RequestParam(defaultValue = "all") String queryType,
             
             @Parameter(description = "Player ID (required for queryType=byId)")
             @RequestParam(required = false) Integer playerId,
 
             @Parameter(description = "Team ID (required for queryType=byTeam)")
             @RequestParam(required = false) Integer teamId,
-            
-            @Parameter(description = "Page number (1-based)")
-            @RequestParam(required = false, defaultValue = "1") Integer page,
-            
-            @Parameter(description = "Page size")
-            @RequestParam(required = false, defaultValue = "10") Integer size,
-            
-            @Parameter(description = "Sort field")
-            @RequestParam(required = false, defaultValue = "createAt") String sortBy,
-            
-            @Parameter(description = "Sort direction (asc/desc)")
-            @RequestParam(required = false, defaultValue = "desc") String sortDirection
-    ) {
-        try {
-            Object data;
-            String message;
-            
-            switch (queryType.toLowerCase()) {
-                case "all":
-                    data = playerService.getAllPlayers();
-                    message = "Get Player list";
-                    break;
-                    
-                case "byid":
-                    if (playerId == null) {
-                        return ResponseObject.builder()
-                                .status(400)
-                                .message("Player ID is required for queryType=byId")
-                                .build();
-                    }
-                    data = playerService.getPlayerById(playerId);
-                    message = "Get player successfully";
-                    break;
 
-                case "byteam":
-                    if (teamId == null) {
-                        return ResponseObject.builder()
-                                .status(400)
-                                .message("Team ID is required for queryType=byTeam")
-                                .build();
-                    }
-                    data = playerService.getByTeam(teamId);
-                    message = "Get Players information successfully";
-                    break;
-                    
-                default:
-                    return ResponseObject.builder()
-                            .status(400)
-                            .message("Invalid queryType. Valid values: all, byId, byTeam")
-                            .build();
-            }
-            
-            return ResponseObject.builder()
-                    .status(1000)
-                    .message(message)
-                    .data(data)
-                    .build();
-                    
-        } catch (Exception e) {
-            log.error("Error in getPlayers: ", e);
-            return ResponseObject.builder()
-                    .status(500)
-                    .message("Internal server error: " + e.getMessage())
-                    .build();
-        }
+            @Parameter(description = "Customer ID (required for queryType=byCustomer)")
+            @RequestParam(required = false) String customerId,
+
+            @Parameter(description = "Page number (1-based)", required = true)
+            @RequestParam(required = false, defaultValue = "1") Integer page,
+
+            @Parameter(description = "Page size", required = true)
+            @RequestParam(required = false, defaultValue = "10") Integer size,
+
+            @Parameter(description = "Sort field",
+                    required = true,
+                    schema = @Schema(
+                            allowableValues = {"createAt", "totalScore"}
+                    ))
+            @RequestParam(required = false, defaultValue = "createAt") String sortBy,
+
+            @Parameter(description = "Sort direction (asc/desc)",
+                    required = true,
+                    schema = @Schema(
+                            allowableValues = {"desc", "asc"}
+                    ))
+            @RequestParam(defaultValue = "desc") String sortDirection
+    ) {
+        PageableRequestDto req = PageableRequestDto.builder()
+                .page(page)
+                .size(size)
+                .sortBy(sortBy)
+                .sortDirection(sortDirection)
+                .build();
+
+        Map<String, Object> filters = new HashMap<>();
+        filters.put("queryType", queryType);
+        if (playerId != null) filters.put("playerId", playerId);
+        if (teamId != null) filters.put("teamId", teamId);
+        if (customerId != null && !customerId.isEmpty()) filters.put("customerId", customerId);
+
+        return ResponseObject.builder()
+                .status(1000)
+                .message("Player List")
+                .data(playerService.getAll(req, filters))
+                .build();
     }
 
     @PostMapping

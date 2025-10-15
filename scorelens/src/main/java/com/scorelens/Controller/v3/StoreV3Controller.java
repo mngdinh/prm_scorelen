@@ -1,11 +1,13 @@
 package com.scorelens.Controller.v3;
 
+import com.scorelens.DTOs.Request.PageableRequestDto;
 import com.scorelens.DTOs.Request.StoreRequest;
 import com.scorelens.DTOs.Request.StoreV3UpdateRequest;
 import com.scorelens.Entity.ResponseObject;
 import com.scorelens.Service.StoreService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +15,9 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 @Tag(name = "Store V3", description = "Unified Store API")
@@ -26,81 +31,54 @@ public class StoreV3Controller {
     @Autowired
     StoreService storeService;
 
-
-    @Operation(summary = "Get stores with unified parameters", 
-               description = "Unified API that combines all GET operations from v1 controller")
     @GetMapping
     public ResponseObject getStores(
-            @Parameter(description = "Query type: all, byId, storeData")
-            @RequestParam(required = false, defaultValue = "all") String queryType,
+            @Parameter(description = "Query type: all, byId",
+                    required = true,
+                    schema = @Schema(
+                            allowableValues = {"all", "byId"}
+                    ))
+            @RequestParam(defaultValue = "all") String queryType,
             
             @Parameter(description = "Store ID (required for queryType=byId)")
             @RequestParam(required = false) String storeId,
             
-            @Parameter(description = "Page number (1-based)")
+            @Parameter(description = "Page number (1-based)", required = true)
             @RequestParam(required = false, defaultValue = "1") Integer page,
             
-            @Parameter(description = "Page size")
+            @Parameter(description = "Page size", required = true)
             @RequestParam(required = false, defaultValue = "10") Integer size,
-            
-            @Parameter(description = "Sort field")
-            @RequestParam(required = false, defaultValue = "name") String sortBy,
-            
-            @Parameter(description = "Sort direction (asc/desc)")
-            @RequestParam(required = false, defaultValue = "asc") String sortDirection
-    ) {
-        try {
-            Object data;
-            String message;
-            
-            switch (queryType.toLowerCase()) {
-                case "all":
-                    data = storeService.findAllStores();
-                    message = "All Stores";
-                    break;
-                    
-                case "byid":
-                    if (storeId == null || storeId.trim().isEmpty()) {
-                        return ResponseObject.builder()
-                                .status(400)
-                                .message("Store ID is required for queryType=byId")
-                                .build();
-                    }
-                    data = storeService.findStoreById(storeId);
-                    message = "Store found";
-                    break;
 
-                case "storedata":
-                    if (storeId == null || storeId.trim().isEmpty()) {
-                        return ResponseObject.builder()
-                                .status(400)
-                                .message("Store ID is required for queryType=byId")
-                                .build();
-                    }
-                    data = storeService.getStoreData(storeId);
-                    message = "Store found";
-                    break;
-                    
-                default:
-                    return ResponseObject.builder()
-                            .status(400)
-                            .message("Invalid queryType. Valid values: all, byId")
-                            .build();
-            }
-            
-            return ResponseObject.builder()
-                    .status(1000)
-                    .message(message)
-                    .data(data)
-                    .build();
-                    
-        } catch (Exception e) {
-            log.error("Error in getStores: ", e);
-            return ResponseObject.builder()
-                    .status(500)
-                    .message("Internal server error: " + e.getMessage())
-                    .build();
-        }
+            @Parameter(description = "Sort field",
+                    required = true,
+                    schema = @Schema(
+                            allowableValues = {"name", "storeID"}
+                    ))
+            @RequestParam(defaultValue = "name") String sortBy,
+
+            @Parameter(description = "Sort direction (asc/desc)",
+                    required = true,
+                    schema = @Schema(
+                            allowableValues = {"desc", "asc"}
+                    ))
+            @RequestParam(defaultValue = "desc") String sortDirection
+    ) {
+        PageableRequestDto req = PageableRequestDto.builder()
+                .page(page)
+                .size(size)
+                .sortBy(sortBy)
+                .sortDirection(sortDirection)
+                .build();
+
+        Map<String, Object> filters = new HashMap<>();
+        filters.put("queryType", queryType);
+        if (storeId != null && !storeId.isEmpty()) filters.put("storeId", storeId);
+
+        return ResponseObject.builder()
+                .status(1000)
+                .message("Store List")
+                .data(storeService.getAll(req, filters))
+                .build();
     }
 
     @PostMapping

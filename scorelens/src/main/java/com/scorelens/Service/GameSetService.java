@@ -17,18 +17,25 @@ import com.scorelens.Mapper.GameSetMapper;
 import com.scorelens.Repository.BilliardMatchRepository;
 import com.scorelens.Repository.GameSetRepository;
 import com.scorelens.Repository.TeamRepository;
+import com.scorelens.Service.Filter.BaseSpecificationService;
 import com.scorelens.Service.Interface.IGameSetService;
+import jakarta.persistence.criteria.Predicate;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 
 @Slf4j
 @Service
-public class GameSetService implements IGameSetService {
+public class GameSetService extends BaseSpecificationService<GameSet, GameSetResponse> implements IGameSetService {
 
     @Autowired
     private GameSetRepository gameSetRepository;
@@ -44,6 +51,37 @@ public class GameSetService implements IGameSetService {
     TeamSetService teamSetService;
     @Autowired
     private GameSetMapper gameSetMapper;
+
+    @Override
+    protected JpaSpecificationExecutor<GameSet> getRepository() {
+        return gameSetRepository;
+    }
+
+    @Override
+    protected Function<GameSet, GameSetResponse> getMapper() {
+        return gameSetMapper::toGameSetResponse;
+    }
+
+    @Override
+    protected Specification<GameSet> buildSpecification(Map<String, Object> filters) {
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            Integer matchId = (Integer) filters.get("matchId");
+            Integer gameSetId = (Integer) filters.get("gameSetId");
+            String queryType = (String) filters.get("queryType");
+
+            if ("byId".equals(queryType)) {
+                predicates.add(cb.equal(root.get("gameSetID"), gameSetId));
+            }
+
+            if ("byMatch".equals(queryType)) {
+                predicates.add(cb.equal(root.get("billiardMatch").get("billiardMatchID"), matchId));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+    }
 
     @Override
     public List<GameSetResponse> getAllGameSets() {
@@ -179,8 +217,6 @@ public class GameSetService implements IGameSetService {
         log.info("GameSet no " + gameSet.getGameSetNo() + " has been started");
         return gameSet;
     }
-
-
 
 
 }

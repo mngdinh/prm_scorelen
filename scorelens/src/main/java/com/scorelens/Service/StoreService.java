@@ -12,25 +12,27 @@ import com.scorelens.Exception.AppException;
 import com.scorelens.Exception.ErrorCode;
 import com.scorelens.Mapper.StoreMapper;
 import com.scorelens.Repository.StoreRepo;
+import com.scorelens.Service.Filter.BaseSpecificationService;
 import com.scorelens.Service.Interface.IStoreService;
+import jakarta.persistence.criteria.Predicate;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 @Slf4j
-public class StoreService implements IStoreService {
+public class StoreService extends BaseSpecificationService<Store, StoreResponse> implements IStoreService {
 
     @Autowired
     private StoreRepo storeRepo;
@@ -38,7 +40,30 @@ public class StoreService implements IStoreService {
     @Autowired
     private StoreMapper storeMapper;
 
+    @Override
+    protected JpaSpecificationExecutor<Store> getRepository() {
+        return storeRepo;
+    }
 
+    @Override
+    protected Function<Store, StoreResponse> getMapper() {
+        return storeMapper::toStoreResponse;
+    }
+
+    @Override
+    protected Specification<Store> buildSpecification(Map<String, Object> filters) {
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            String queryType = (String) filters.get("queryType");
+            String storeId = (String) filters.get("storeId");
+
+            if ("byId".equals(queryType))
+                predicates.add(cb.equal(root.get("storeID"), storeId));
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+    }
 
     @Override
     public StoreResponse createStore(StoreRequest storeRequest) {
@@ -115,7 +140,6 @@ public class StoreService implements IStoreService {
                 .collect(Collectors.toList());
         return new StoreDataResponse(total, playing, available, broken, customers);
     }
-
 
 
 }

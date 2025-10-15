@@ -14,12 +14,10 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class PageableResponseDto<T> {
     List<T> content; // List of items
-    int page; // Current page number
-    int size; // Page size
-    long totalElements; // Total number of elements
+    int currentPage; // Current page number
+    int pageSizes; // Page size
+    long totalItems; // Total number of elements
     int totalPages; // Total number of pages
-    boolean first; // Is first page
-    boolean last; // Is last page
     boolean empty; // Is empty page
     String sortBy; // Sort field
     String sortDirection; // Sort direction

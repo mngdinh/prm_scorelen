@@ -54,8 +54,6 @@ public class BilliardMatchV3Controller {
 
     RealTimeNotification realTimeNotification;
 
-    @Operation(summary = "Get billiard matches with unified parameters",
-            description = "Unified API that combines all GET operations from v1 controller")
     @GetMapping
     public ResponseObject getBilliardMatches(
             @Parameter(description = "Query type: byId, byCustomer, byStaff, byPlayer, filter, byTable",
@@ -80,26 +78,34 @@ public class BilliardMatchV3Controller {
             @Parameter(description = "Player ID (required for queryType=byPlayer)")
             @RequestParam(required = false) Integer playerId,
 
-            @Parameter(description = "Filter by date (for queryType=filter)")
+            @Parameter(description = "Filter by date")
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date date,
 
-            @Parameter(description = "Filter by status (for queryType=filter)")
+            @Parameter(description = "Filter by status")
             @RequestParam(required = false) String status,
 
-            @Parameter(description = "Filter by mode ID (for queryType=filter)")
+            @Parameter(description = "Filter by mode ID")
             @RequestParam(required = false) Integer modeID,
 
-            @Parameter(description = "Page number (1-based)")
-            @RequestParam(required = true, defaultValue = "1") Integer page,
+            @Parameter(description = "Page number (1-based)", required = true)
+            @RequestParam(defaultValue = "1") Integer page,
 
-            @Parameter(description = "Page size")
-            @RequestParam(required = true, defaultValue = "10") Integer size,
+            @Parameter(description = "Page size", required = true)
+            @RequestParam(defaultValue = "10") Integer size,
 
-            @Parameter(description = "Sort field")
-            @RequestParam(required = true, defaultValue = "startTime") String sortBy,
+            @Parameter(description = "Sort field",
+                    required = true,
+                    schema = @Schema(
+                            allowableValues = {"startTime", "endTime"}
+                    ))
+            @RequestParam(defaultValue = "startTime") String sortBy,
 
-            @Parameter(description = "Sort direction (asc/desc)")
-            @RequestParam(required = true, defaultValue = "desc") String sortDirection
+            @Parameter(description = "Sort direction (asc/desc)",
+                    required = true,
+                    schema = @Schema(
+                            allowableValues = {"desc", "asc"}
+                    ))
+            @RequestParam(defaultValue = "desc") String sortDirection
     ) {
         PageableRequestDto req = PageableRequestDto.builder()
                 .page(page)
@@ -116,7 +122,7 @@ public class BilliardMatchV3Controller {
         if (staffId != null && !"null".equals(staffId)) filters.put("staffId", staffId);
         if (playerId != null) filters.put("playerId", playerId);
         if (date != null) filters.put("date", date);
-        if (status != null && !"null".equals(status)) filters.put("status", status);
+        if (status != null) filters.put("status", status);
         if (modeID != null) filters.put("modeID", modeID);
 
         PageableResponseDto<BilliardMatchResponse> data = billiardMatchService.getAll(req, filters);

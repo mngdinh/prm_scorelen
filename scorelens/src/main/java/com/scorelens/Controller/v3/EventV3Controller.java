@@ -34,8 +34,6 @@ public class EventV3Controller {
     @Autowired
     EventService eventService;
 
-    @Operation(summary = "Get events with unified parameters", 
-               description = "Unified API that combines all GET operations from v1 and v2 controllers")
     @GetMapping
     public ResponseObject getEvents(
             @Parameter(description = "Query type: byPlayer, byGameSet, byPlayerAndGameSet",

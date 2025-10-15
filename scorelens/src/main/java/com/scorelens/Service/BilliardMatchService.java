@@ -120,7 +120,7 @@ public class BilliardMatchService extends BaseSpecificationService<BilliardMatch
                 predicates.add(cb.equal(root.get("players"), playerId));
             }
 
-            if (status != null && !status.isEmpty()) {
+            if (status != null && (!status.isEmpty())) {
                 predicates.add(cb.equal(root.get("status"), status));
             }
 

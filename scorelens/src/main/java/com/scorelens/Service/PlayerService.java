@@ -11,15 +11,22 @@ import com.scorelens.Exception.ErrorCode;
 import com.scorelens.Mapper.PlayerMapper;
 import com.scorelens.Repository.PlayerRepo;
 import com.scorelens.Repository.TeamRepository;
+import com.scorelens.Service.Filter.BaseSpecificationService;
 import com.scorelens.Service.Interface.IPlayerService;
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 
 @Service
-public class PlayerService implements IPlayerService {
+public class PlayerService extends BaseSpecificationService<Player, PlayerResponse> implements IPlayerService {
 
     @Autowired
     PlayerRepo playerRepo;
@@ -29,6 +36,39 @@ public class PlayerService implements IPlayerService {
 
     @Autowired
     PlayerMapper playerMapper;
+
+    @Override
+    protected JpaSpecificationExecutor<Player> getRepository() {
+        return playerRepo;
+    }
+
+    @Override
+    protected Function<Player, PlayerResponse> getMapper() {
+        return playerMapper::toDto;
+    }
+
+    @Override
+    protected Specification<Player> buildSpecification(Map<String, Object> filters) {
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            String queryType = (String) filters.get("queryType");
+            Integer playerId = (Integer) filters.get("playerId");
+            Integer teamId = (Integer) filters.get("teamId");
+            String customerId = (String) filters.get("customerId");
+
+            if ("byId".equals(queryType))
+                predicates.add(cb.equal(root.get("playerID"), playerId));
+
+            if ("byTeam".equals(queryType))
+                predicates.add(cb.equal(root.get("team").get("teamID"), teamId));
+
+            if ("byCustomer".equals(queryType))
+                predicates.add(cb.equal(root.get("customerID"), customerId));
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+    }
 
     @Override
     public List<PlayerResponse> getAllPlayers() {
@@ -65,7 +105,7 @@ public class PlayerService implements IPlayerService {
     }
 
     @Override
-    public PlayerResponse updatePlayer(Integer id, PlayerUpdateRequest request){
+    public PlayerResponse updatePlayer(Integer id, PlayerUpdateRequest request) {
         Player player = playerRepo.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.PLAYER_NOT_FOUND));
 
@@ -102,7 +142,7 @@ public class PlayerService implements IPlayerService {
         for (Team t : match.getTeams()) {
             for (Player p : t.getPlayers()) {
                 if (p.getCustomerID() != null &&
-                        request.getInfo().equals(p.getCustomerID()) ) {
+                        request.getInfo().equals(p.getCustomerID())) {
                     throw new AppException(ErrorCode.CUSTOMER_SAVED);
                 }
             }

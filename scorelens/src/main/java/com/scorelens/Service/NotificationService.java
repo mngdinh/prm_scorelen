@@ -8,21 +8,28 @@ import com.scorelens.Exception.ErrorCode;
 import com.scorelens.Mapper.NotificationMapper;
 import com.scorelens.Repository.BilliardMatchRepository;
 import com.scorelens.Repository.NotificationRepo;
+import com.scorelens.Service.Filter.BaseSpecificationService;
 import com.scorelens.Service.Interface.INotificationService;
+import jakarta.persistence.criteria.Predicate;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-public class NotificationService implements INotificationService {
+public class NotificationService extends BaseSpecificationService<Notification, NotificationResponse> implements INotificationService {
 
     NotificationMapper notificationMapper;
 
@@ -31,6 +38,32 @@ public class NotificationService implements INotificationService {
     BilliardMatchRepository billiardMatchRepo;
 
     SimpMessagingTemplate messagingTemplate;
+
+    @Override
+    protected JpaSpecificationExecutor<Notification> getRepository() {
+        return notificationRepo;
+    }
+
+    @Override
+    protected Function<Notification, NotificationResponse> getMapper() {
+        return notificationMapper::toNotiResponse;
+    }
+
+    @Override
+    protected Specification<Notification> buildSpecification(Map<String, Object> filters) {
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            String queryType = (String) filters.get("queryType");
+            Integer notificationId = (Integer) filters.get("notificationId");
+            Integer matchId = (Integer) filters.get("matchId");
+
+            if ("byId".equals(queryType)) predicates.add(cb.equal(root.get("notificationID"), notificationId));
+            if ("byMatch".equals(queryType)) predicates.add(cb.equal(root.get("billiardMatch").get("billiardMatchID"), matchId));
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+    }
 
     @Override
     public NotificationResponse saveNotification(NotificationRequest notificationRequest) {

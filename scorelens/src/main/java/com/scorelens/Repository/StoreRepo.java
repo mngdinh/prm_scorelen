@@ -2,12 +2,13 @@ package com.scorelens.Repository;
 
 import com.scorelens.Entity.Store;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-public interface StoreRepo extends JpaRepository<Store, String> {
+public interface StoreRepo extends JpaRepository<Store, String>, JpaSpecificationExecutor<Store> {
     boolean existsByname(String name);
 
     @Query("SELECT p.customerID, p.name, COUNT(p) " +
