@@ -1,6 +1,5 @@
 package com.scorelens.Controller.v3;
 
-import com.scorelens.Controller.v1.GameSetV1Controller;
 import com.scorelens.DTOs.Request.*;
 import com.scorelens.DTOs.Response.*;
 import com.scorelens.Entity.BilliardMatch;
@@ -44,7 +43,7 @@ public class BilliardMatchV3Controller {
     KafkaProducer producer;
 
     @Autowired
-    GameSetV1Controller gameSetController;
+    GameSetV3Controller gameSetController;
 
     @Autowired
     EventProcessorService eventProcessorService;

@@ -9,21 +9,31 @@ import com.scorelens.Mapper.EventMapper;
 import com.scorelens.Repository.EventRepo;
 import com.scorelens.Repository.GameSetRepository;
 import com.scorelens.Repository.PlayerRepo;
+import com.scorelens.Service.Filter.BaseSpecificationService;
 import com.scorelens.Service.KafkaService.KafkaProducer;
 import com.scorelens.Service.Interface.IEventService;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Service;
 
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-public class EventService implements IEventService {
+public class EventService extends BaseSpecificationService<Event, EventResponse> implements IEventService {
 
     EventRepo eventRepo;
 
@@ -35,6 +45,43 @@ public class EventService implements IEventService {
 
     KafkaProducer kafkaProducer;
 
+    @Override
+    protected JpaSpecificationExecutor<Event> getRepository() {
+        return eventRepo;
+    }
+
+    @Override
+    protected Function<Event, EventResponse> getMapper() {
+        return eventMapper::toEventResponse;
+    }
+
+    @Override
+    protected Specification<Event> buildSpecification(Map<String, Object> filters) {
+        return (Root<Event> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+//            String playerId = String.valueOf(filters.get("playerId"));
+//            String gameSetId = String.valueOf(filters.get("gameSetId"));
+            Integer playerId = (Integer) filters.get("playerId");
+            Integer gameSetId = (Integer) filters.get("gameSetId");
+            String queryType = (String) filters.get("queryType");
+
+            if ("byGameSet".equals(queryType)) {
+                predicates.add(cb.equal(root.get("gameSet").get("gameSetID"), gameSetId));
+            }
+
+            if ("byPlayer".equals(queryType)) {
+                predicates.add(cb.equal(root.get("player").get("playerID"), playerId));
+            }
+
+            if ("byPlayerAndGameSet".equals(queryType)) {
+                predicates.add(cb.equal(root.get("player").get("playerID"), playerId));
+                predicates.add(cb.equal(root.get("gameSet").get("gameSetID"), gameSetId));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+    }
 
     @Override
     public EventResponse addEvent(EventRequest eventRequest) {
