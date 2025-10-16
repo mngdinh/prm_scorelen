@@ -138,6 +138,10 @@ public class BilliardMatchService extends BaseSpecificationService<BilliardMatch
         };
     }
 
+    public List<BilliardMatchResponse> getMatchByTableIDAndStatus (List<String> tableIds, MatchStatus status) {
+        return billiardMatchMapper.toBilliardMatchResponses(repository.findByBillardTable_BillardTableIDInAndStatus(tableIds, status));
+    }
+
 
     @Override
     public BilliardMatchResponse getById(Integer id) {

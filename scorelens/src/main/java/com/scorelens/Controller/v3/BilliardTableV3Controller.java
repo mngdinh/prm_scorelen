@@ -7,7 +7,9 @@ import com.scorelens.DTOs.Response.BilliardMatchResponse;
 import com.scorelens.DTOs.Response.BilliardTableResponse;
 import com.scorelens.DTOs.Response.PageableResponseDto;
 import com.scorelens.DTOs.Response.StoreResponse;
+import com.scorelens.Entity.BilliardMatch;
 import com.scorelens.Entity.ResponseObject;
+import com.scorelens.Enums.MatchStatus;
 import com.scorelens.Enums.TableStatus;
 import com.scorelens.Service.BilliardMatchService;
 import com.scorelens.Service.BilliardTableService;
@@ -26,6 +28,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Tag(name = "Billiard Table V3", description = "Unified Billiard Table API")
@@ -103,6 +107,27 @@ public class BilliardTableV3Controller {
 
 
         PageableResponseDto<BilliardTableResponse> r = billiardTableService.getAll(req, filters);
+
+        List<String> tableIds = r.getContent().stream()
+                .map(BilliardTableResponse::getBillardTableID)
+                .toList();
+
+        List<BilliardMatchResponse> ongoingMatches = billiardMatchService.getMatchByTableIDAndStatus(
+                tableIds, MatchStatus.ongoing
+        );
+
+        Map<String, BilliardMatchResponse> ongoingMap = ongoingMatches.stream()
+                .collect(Collectors.toMap(
+                        m -> String.valueOf(m.getBilliardTableID()),
+                        Function.identity()
+                ));
+
+        r.getContent().forEach(tableResp -> {
+            BilliardMatchResponse match = ongoingMap.get(tableResp.getBillardTableID());
+            if (match != null) {
+                tableResp.setMatchResponse(match);
+            }
+        });
 
 
         return ResponseObject.builder()

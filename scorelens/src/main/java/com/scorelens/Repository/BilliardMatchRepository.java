@@ -1,6 +1,7 @@
 package com.scorelens.Repository;
 
 import com.scorelens.Entity.BilliardMatch;
+import com.scorelens.Enums.MatchStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -13,6 +14,8 @@ import java.util.List;
 public interface BilliardMatchRepository extends JpaRepository<BilliardMatch, Integer>, JpaSpecificationExecutor<BilliardMatch> {
     List<BilliardMatch> findBycustomerID(String id);
     List<BilliardMatch> findBystaffID(String id);
+    List<BilliardMatch> findByBillardTable_BillardTableIDInAndStatus(List<String> ids, MatchStatus status);
+
 
 //    @Query(value =
 //            "SELECT bm.billiard_matchid, bm.start_time, bm.end_time, bm.status, bm.winner, " +
