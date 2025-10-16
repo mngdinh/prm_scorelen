@@ -107,7 +107,7 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults());
 
         // Thêm cookie JWT filter trước OAuth2 resource server
-        http.addFilterBefore(cookieJwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+//        http.addFilterBefore(cookieJwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
