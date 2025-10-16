@@ -359,7 +359,7 @@ public class BilliardMatchService extends BaseSpecificationService<BilliardMatch
         }
         // Check if match should end
         checkMatchEnd(match, request.getMatchID());
-        return billiardMatchMapper.toBilliardMatchResponse(repository.save(match));
+        return billiardMatchMapper.toBilliardMatchResponse(match);
     }
 
     public void checkMatchEnd(BilliardMatch match, Integer matchID) {
