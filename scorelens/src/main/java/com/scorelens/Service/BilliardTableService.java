@@ -78,7 +78,7 @@ public class BilliardTableService extends BaseSpecificationService<BilliardTable
             String status = (String) filters.get("status");
 
             if (tableId != null && !tableId.isEmpty()) {
-                predicates.add(cb.equal(root.get("billiardTableID"), tableId));
+                predicates.add(cb.equal(root.get("billardTableID"), tableId));
             }
 
             if (storeId != null && !storeId.isEmpty()) {
