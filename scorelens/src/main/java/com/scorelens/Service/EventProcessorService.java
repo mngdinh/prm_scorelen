@@ -2,6 +2,7 @@ package com.scorelens.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.firebase.messaging.FirebaseMessagingException;
+import com.scorelens.Component.ModeLoading;
 import com.scorelens.DTOs.Request.*;
 import com.scorelens.DTOs.Response.EventResponse;
 import com.scorelens.Entity.GameSet;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
@@ -39,6 +41,7 @@ public class EventProcessorService {
     final BilliardMatchService matchService;
     final PlayerService playerService;
     final RealTimeNotification realTimeNotification;
+    final ModeLoading modeLoading;
 
     /**
      * Xử lý 1 Kafka message gửi về, parse thành event, log, start gameSet & match nếu cần
@@ -77,19 +80,20 @@ public class EventProcessorService {
 
             Player player = playerService.getPlayer(event.getPlayerID());
 
+            Set<Integer> dbMode = modeLoading.getModes();
+
             int modeID = player.getTeam().getBilliardMatch().getMode().getModeID();
 
-            switch (modeID) {
-                case 3: //9 ball
-                    //1 round đấu kết thúc => update match score
-                    //bi 9 potted && !isFoul && scored
-                    //9: 'yellow_striped_9'
-                    if (event.isScoreValue() && !event.isFoul() && lmr.getTargetBallId() == 9) {
-                        //update match score
-                        updateMatch(player);
-                    }
-                    break;
+            if (modeLoading.isValidMode(modeID)) {
+                //1 round đấu kết thúc => update match score
+                //bi 9 potted && !isFoul && scored
+                //9: 'yellow_striped_9'
+                if (event.isScoreValue() && !event.isFoul() && lmr.getTargetBallId() == 9) {
+                    //update match score
+                    updateMatch(player);
+                }
             }
+
             // Nếu gameSet chưa start thì start
             if (!gameSetStartedMap.containsKey(gameSetID)) {
                 //update game_set status

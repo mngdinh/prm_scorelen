@@ -1,5 +1,6 @@
 package com.scorelens.Service;
 
+import com.scorelens.Component.ModeLoading;
 import com.scorelens.DTOs.Request.ModeRequest;
 import com.scorelens.DTOs.Response.ModeResponse;
 import com.scorelens.Entity.Mode;
@@ -29,6 +30,9 @@ public class ModeService extends BaseSpecificationService<Mode, ModeResponse> im
 
     @Autowired
     private ModeMapper modeMapper;
+
+    @Autowired
+    ModeLoading modeLoading;
 
 
     @Override
@@ -62,6 +66,7 @@ public class ModeService extends BaseSpecificationService<Mode, ModeResponse> im
         mode.setDescription(request.getDescription());
         mode.setActive(request.isActive());
         mode = modeRepository.save(mode);
+        modeLoading.addMode(mode);
         return modeMapper.toResponse(mode);
     }
 
