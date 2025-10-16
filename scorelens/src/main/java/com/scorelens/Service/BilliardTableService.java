@@ -76,17 +76,32 @@ public class BilliardTableService extends BaseSpecificationService<BilliardTable
             String tableId = (String) filters.get("tableId");
             String storeId = (String) filters.get("storeId");
             String status = (String) filters.get("status");
+            String queryType = (String) filters.get("queryType");
 
-            if (tableId != null && !tableId.isEmpty()) {
-                predicates.add(cb.equal(root.get("billardTableID"), tableId));
+            // Nếu queryType là byStore mà storeId trống -> trả về false
+            if ("byStore".equals(queryType) && (storeId == null || storeId.isEmpty())) {
+                // Trick: tạo predicate luôn sai => không trả về kết quả nào
+                return cb.disjunction(); // tương đương WHERE 1=0
             }
 
-            if (storeId != null && !storeId.isEmpty()) {
+            if ("all".equals(queryType)) {
+                if (status != null && !status.isEmpty()) {
+                    predicates.add(cb.equal(root.get("status"), status));
+                }
+            }
+            else if ("byId".equals(queryType)) {
+                if (tableId != null && !tableId.isEmpty()) {
+                    predicates.add(cb.equal(root.get("billardTableID"), tableId));
+                }
+                if (status != null && !status.isEmpty()) {
+                    predicates.add(cb.equal(root.get("status"), status));
+                }
+            }
+            else if ("byStore".equals(queryType)) {
                 predicates.add(cb.equal(root.get("store").get("storeID"), storeId));
-            }
-
-            if (status != null && !status.isEmpty()) {
-                predicates.add(cb.equal(root.get("status"), status));
+                if (status != null && !status.isEmpty()) {
+                    predicates.add(cb.equal(root.get("status"), status));
+                }
             }
 
             return cb.and(predicates.toArray(new Predicate[0]));

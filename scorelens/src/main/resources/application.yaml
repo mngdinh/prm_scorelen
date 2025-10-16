@@ -89,8 +89,10 @@ springdoc:
     path: /swagger-ui.html
 jwt:
   signerKey: ${JWT_SIGNER_KEY}
-  valid-duration: 3600 #in second
-  refreshable-duration: 604800 #in seconds
+  valid-duration: ${JWT_VALID_DURATION} #in second
+  refreshable-duration: ${JWT_REFRESHABLE_DURATION} #in seconds
+  issuer: ${JWT_ISSUER}
+  audience: ${JWT_AUDIENCE}
 aws:
   s3:
     access-key: ${AWS_ACCESS_KEY_ID}

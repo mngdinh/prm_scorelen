@@ -50,6 +50,14 @@ public class AuthenticationService implements IAuthenticationService {
     protected String SIGNER_KEY;
 
     @NonFinal
+    @Value("${jwt.issuer}")
+    protected String ISSUER;
+
+    @NonFinal
+    @Value("${jwt.audience}")
+    protected String AUDIENCE;
+
+    @NonFinal
     @Value("${jwt.valid-duration}") //Đọc từ file application.yaml
     protected long VALID_DURATION;
 
@@ -149,7 +157,8 @@ public class AuthenticationService implements IAuthenticationService {
                 .claim("userID", userId)
                 .claim("scope", scope)
                 .jwtID(UUID.randomUUID().toString())
-                .issuer("scorelens")
+                .issuer(ISSUER)
+                .audience(AUDIENCE)
                 .issueTime(new Date())
                 .expirationTime(new Date(
                         Instant.now().plus(VALID_DURATION, ChronoUnit.SECONDS).toEpochMilli()

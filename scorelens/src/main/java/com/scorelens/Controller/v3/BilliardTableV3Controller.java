@@ -63,7 +63,7 @@ public class BilliardTableV3Controller {
             @Parameter(description = "Status type: available, inUse, underMaintainance",
                     required = true,
                     schema = @Schema(
-                            allowableValues = {"available", "inUse", "underMaintainance", "null"}
+                            allowableValues = {"null", "available", "inUse", "underMaintainance"}
                     ))
             @RequestParam(defaultValue = "null") String status,
 
@@ -97,8 +97,8 @@ public class BilliardTableV3Controller {
 
         Map<String, Object> filters = new HashMap<>();
         filters.put("queryType", queryType);
-        if (tableId != null && !"null".equals(tableId)) filters.put("tableId", tableId);
-        if (storeId != null && !"null".equals(storeId)) filters.put("storeId", storeId);
+        if (tableId != null && !tableId.isEmpty()) filters.put("tableId", tableId);
+        if (storeId != null && !storeId.isEmpty()) filters.put("storeId", storeId);
         if (status != null && !"null".equals(status)) filters.put("status", status);
 
 
