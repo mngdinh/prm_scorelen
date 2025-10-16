@@ -16,6 +16,8 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
@@ -33,7 +35,9 @@ import org.springframework.web.filter.CorsFilter;
 import javax.crypto.spec.SecretKeySpec;
 import java.beans.Encoder;
 import java.sql.Array;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity(debug = false)
@@ -52,7 +56,6 @@ public class SecurityConfig {
             "/index.html",
             "/ws/**",
             "/ws-native", "/ws-native/**"
-
 
 
     };
@@ -98,8 +101,8 @@ public class SecurityConfig {
 
         http.oauth2ResourceServer(oauth2 ->
                 oauth2.jwt(jwtConfigurer ->
-                        jwtConfigurer.decoder(customJwtDecoder)
-                                .jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                                jwtConfigurer.decoder(customJwtDecoder)
+                                        .jwtAuthenticationConverter(jwtAuthenticationConverter()))
                         .authenticationEntryPoint(new JwtAuthenticationEntryPoint())
                         .accessDeniedHandler(customAccessDeniedHandler));
 
@@ -112,13 +115,22 @@ public class SecurityConfig {
         return http.build();
     }
 
-    JwtAuthenticationConverter jwtAuthenticationConverter(){
-        JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-//        jwtGrantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
-        jwtGrantedAuthoritiesConverter.setAuthorityPrefix(""); //đã set pattern bên phía AuthenticationService
-
+    JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-        converter.setJwtGrantedAuthoritiesConverter(jwtGrantedAuthoritiesConverter);
+
+        converter.setJwtGrantedAuthoritiesConverter(jwt -> {
+            List<GrantedAuthority> authorities = new ArrayList<>();
+
+            // Lấy claim "role"
+            String role = jwt.getClaimAsString("role");
+            if (role != null && !role.isEmpty()) {
+                authorities.add(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
+            }
+
+            System.out.println("✅ Extracted authorities from JWT: " + authorities);
+
+            return authorities;
+        });
         return converter;
     }
 
