@@ -147,6 +147,7 @@ public class PlayerService extends BaseSpecificationService<Player, PlayerRespon
                 }
             }
         }
+        player.setCustomerID(request.getInfo());
 //        if (request.getInfo().matches("\\d+")){
 //            Customer c = customerRepo.findByPhoneNumber(request.getInfo())
 //                    .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXIST));

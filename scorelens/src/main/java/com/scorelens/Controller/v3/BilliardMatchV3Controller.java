@@ -134,6 +134,15 @@ public class BilliardMatchV3Controller {
                 .build();
     }
 
+    @GetMapping("/byEmail/{id}")
+    public ResponseObject getByCustomerID(@PathVariable String id) {
+        return ResponseObject.builder()
+                .status(1000)
+                .message("Get Matchs information successfully")
+                .data(billiardMatchService.getByCustomerID(id))
+                .build();
+    }
+
     @PostMapping
     public ResponseObject createMatch(@RequestBody BilliardMatchCreateRequest request) {
         BilliardMatchResponse response = billiardMatchService.createMatch(request);

@@ -134,8 +134,8 @@ public class StoreService extends BaseSpecificationService<Store, StoreResponse>
         List<Object[]> raw = storeRepo.countMatchesByCustomerInStore(storeId);
         List<CustomerMatchResponse> customers = raw.stream()
                 .map(r -> new CustomerMatchResponse(
-                        (String) r[1],
-                        ((Long) r[2]).intValue()
+                        (String) r[0],
+                        ((Long) r[1]).intValue()
                 ))
                 .collect(Collectors.toList());
         return new StoreDataResponse(total, playing, available, broken, customers);

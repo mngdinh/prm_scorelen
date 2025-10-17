@@ -81,6 +81,15 @@ public class StoreV3Controller {
                 .build();
     }
 
+    @GetMapping("data/{id}")
+    public ResponseObject getStoreData(@PathVariable String id) {
+        return ResponseObject.builder()
+                .status(1000)
+                .message("Store found")
+                .data(storeService.getStoreData(id))
+                .build();
+    }
+
     @PostMapping
     public ResponseObject addStore(@RequestBody StoreRequest storeRequest) {
         return ResponseObject.builder()
