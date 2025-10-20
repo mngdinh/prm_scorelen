@@ -47,31 +47,45 @@ public class SecurityConfig {
 
     private final String[] PUBLIC_ENDPOINTS = {
             "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
-            "/v*/auth/login", "/v*/auth/login-google", "/v*/auth/introspect",
-            "/v*/auth/register", "/v*/auth/logout", "/v*/auth/refresh",
-            "/v*/auth/password-forgot", "/v*/auth/password-reset",
-
-//            "/v*/",
             "/v*/ping",
             "/index.html",
             "/ws/**",
-            "/ws-native", "/ws-native/**"
+            "/ws-native", "/ws-native/**",
+            "/v3/health"
+    };
+
+    private final String[] MANAGER_ENDPOINTS = {
+            "/v*/s3",
+            "/v*/s3/**",
+            "/v*/kafka/**",
+            "/v*/heartbeats",
+            "/v*/heartbeats/**",
+            "/v*/fcm/**",
+            "/v*/qr_codes",
+            "/v*/web_socket"
+
+    };
+
+    public final String[] ADMIN_ENDPOINTS = {
+            "/v*/stores",
+            "/v*/stores/**"
+    };
+
+    public final String[] CUSTOMER_ENDPOINTS = {
+            "/v*/events",
+            "/v*/events/player/**",
+            "/v*/events/game_set/**",
+            "/v*/players",
+            "/v*/players/**",
+            "/v*/notifications",
+            "/v*/gamesets",
+            "/v*/gamesets/**",
+            "/v*/teams",
+            "/v*/teams/**"
+
+    };
 
 
-    };
-    private final String[] CUSTOMER_ENDPOINTS = {
-            "/customers/**"
-    };
-    private final String[] ADMIN_ENDPOINTS = {
-            "/customers/all",
-            "/staffs",
-    };
-    private final String[] PERMISSION_ENDPOINTS = {
-            "/permissions/"
-    };
-    private final String[] ROLE_ENDPOINTS = {
-            "/roles/"
-    };
 
     @Autowired
     @Lazy
@@ -85,19 +99,27 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests(request -> request.anyRequest().permitAll());
-//                .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-//                .requestMatchers(PERMISSION_ENDPOINTS).hasRole("ADMIN")
-//                .requestMatchers(ROLE_ENDPOINTS).hasRole("ADMIN")
-//                .requestMatchers(HttpMethod.PUT, "/v*/teams/*").permitAll()
-//                .requestMatchers(HttpMethod.GET, "/v*/modes").permitAll()
-//                .requestMatchers(HttpMethod.GET, "/v*/modes/*").permitAll()
-//                .requestMatchers(HttpMethod.GET, "/v*/tables/*").permitAll()
-//                .requestMatchers(HttpMethod.GET, "/v*/tables").permitAll()
-//                .requestMatchers(HttpMethod.POST, "/v*/billiard-matches", "/v3/fcm/operation").permitAll()
-//                .requestMatchers(HttpMethod.POST, "/v*/billiard-matches").hasRole("CUSTOMER")
-//                .requestMatchers(HttpMethod.PUT, "/v*/billiard-matches").hasAnyRole("CUSTOMER", "STAFF", "MANAGER", "ADMIN")
-//                .anyRequest().authenticated());
+        http.authorizeHttpRequests(request -> request
+                .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                .requestMatchers(HttpMethod.GET, "/v*/tables").permitAll()
+                .requestMatchers(HttpMethod.POST, "/v*/tables").hasAnyRole("ADMIN", "MANAGER")
+                .requestMatchers(HttpMethod.PUT, "/v*/tables").hasAnyRole("ADMIN", "MANAGER")
+                .requestMatchers(HttpMethod.DELETE, "/v*/tables/**").hasAnyRole("ADMIN", "MANAGER")
+                .requestMatchers(HttpMethod.POST, "/v*/billiard-matches", "/v3/fcm/operation").permitAll()
+                .requestMatchers(HttpMethod.POST, "/v*/billiard-matches").hasAnyRole("CUSTOMER", "STAFF", "MANAGER", "ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/v*/billiard-matches").hasAnyRole( "MANAGER", "ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/v*/billiard-matches/**").hasAnyRole( "MANAGER", "ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/v*/billiard-matches").hasAnyRole("CUSTOMER", "STAFF", "MANAGER", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/v*/billiard-matches").hasAnyRole("CUSTOMER", "STAFF", "MANAGER", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/v*/billiard-matches/byEmail/**").hasAnyRole("CUSTOMER", "STAFF", "MANAGER", "ADMIN")
+                .requestMatchers(CUSTOMER_ENDPOINTS).hasAnyRole("CUSTOMER", "STAFF", "MANAGER", "ADMIN")
+                .requestMatchers(MANAGER_ENDPOINTS).hasAnyRole("ADMIN", "MANAGER")
+                .requestMatchers(HttpMethod.POST, "/v*/modes").hasAnyRole("ADMIN", "MANAGER")
+                .requestMatchers(HttpMethod.PUT, "/v*/modes/**").hasAnyRole("ADMIN", "MANAGER")
+                .requestMatchers(HttpMethod.DELETE, "/v*/modes/**").hasAnyRole("ADMIN", "MANAGER")
+                .requestMatchers(HttpMethod.GET, "/v*/modes").hasAnyRole("CUSTOMER", "STAFF", "MANAGER", "ADMIN")
+                .requestMatchers(ADMIN_ENDPOINTS).hasRole("ADMIN")
+                .anyRequest().authenticated());
 
         http.oauth2ResourceServer(oauth2 ->
                 oauth2.jwt(jwtConfigurer ->
