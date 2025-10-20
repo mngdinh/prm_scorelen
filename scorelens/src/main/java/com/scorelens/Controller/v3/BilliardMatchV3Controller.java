@@ -177,6 +177,11 @@ public class BilliardMatchV3Controller {
                 tableID,
                 WSFCMCode.NOTIFICATION
         );
+        //send create msg to admin dashboard => which table is in use
+        webSocketService.sendToWebSocket(
+                WebSocketTopic.DASHBOARD.getValue(),
+                new WebsocketReq(WSFCMCode.MATCH_START, response)
+        );
 
         return ResponseObject.builder()
                 .status(1000)
