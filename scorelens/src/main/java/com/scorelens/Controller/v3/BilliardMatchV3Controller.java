@@ -146,11 +146,12 @@ public class BilliardMatchV3Controller {
     @PostMapping
     public ResponseObject createMatch(@RequestBody BilliardMatchCreateRequest request) {
         BilliardMatchResponse response = billiardMatchService.createMatch(request);
-        String tableCode = billiardTableService.findBilliardTableById(response.getBilliardTableID()).getTableCode();
+        BilliardTableResponse tableRs = billiardTableService.findBilliardTableById(response.getBilliardTableID());
+        String tableCode = tableRs.getTableCode();
         String tableID = response.getBilliardTableID();
+        String storeID = tableRs.getStoreID();
         //cam ai check
         producer.sendHeartbeat(tableID);
-
         //gửi thông tin trận đấu cho py
         InformationRequest req = producer.mapInformation(response);
         producer.sendEvent(tableID, req);
@@ -179,7 +180,7 @@ public class BilliardMatchV3Controller {
         );
         //send create msg to admin dashboard => which table is in use
         webSocketService.sendToWebSocket(
-                WebSocketTopic.DASHBOARD.getValue(),
+                WebSocketTopic.DASHBOARD.getValue() + storeID,
                 new WebsocketReq(WSFCMCode.MATCH_START, response)
         );
 
