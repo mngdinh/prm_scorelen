@@ -75,6 +75,7 @@ public class BilliardMatchService extends BaseSpecificationService<BilliardMatch
     @Autowired
     KafkaProducer producer;
 
+    @Autowired
     WebSocketService webSocketService;
 
     @Override
