@@ -61,6 +61,9 @@ public class BilliardMatch {
     @Column(name = "code")
     private String code;
 
+    @Column(name = "isPaid")
+    private Boolean isPaid = false;
+
     @OneToMany(mappedBy = "billiardMatch", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<GameSet> sets = new ArrayList<>();
 

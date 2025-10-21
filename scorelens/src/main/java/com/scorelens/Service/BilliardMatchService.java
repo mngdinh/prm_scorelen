@@ -228,6 +228,7 @@ public class BilliardMatchService extends BaseSpecificationService<BilliardMatch
         match.setWinner(null);
         match.setStatus(MatchStatus.pending);
         match.setCode(generateRandomCode());
+        match.setIsPaid(false);
         repository.save(match);
         for (int i = 1; i <= match.getTotalSet(); i++) {
             GameSetCreateRequest setRequest = new GameSetCreateRequest();
@@ -395,6 +396,8 @@ public class BilliardMatchService extends BaseSpecificationService<BilliardMatch
                     WSFCMCode.WINNING_MATCH
             );
 
+            //push
+
             //stop stream
             producer.sendEvent(
                     match.getBillardTable().getBillardTableID(),
@@ -414,7 +417,7 @@ public class BilliardMatchService extends BaseSpecificationService<BilliardMatch
             eventProcessorService.resetGameSetState(gameSetIDList);
 
             //free table
-            billiardTableService.setAvailable(String.valueOf(match.getBillardTable().getBillardTableID()));
+//            billiardTableService.setAvailable(String.valueOf(match.getBillardTable().getBillardTableID()));
 
 
             // sum totalScore moi team tu teamSet
@@ -658,11 +661,17 @@ public class BilliardMatchService extends BaseSpecificationService<BilliardMatch
                 .orElseThrow(() -> new AppException(ErrorCode.MATCH_NOT_FOUND));
     }
 
-
     public String startMatch(int billiardMatchID){
         BilliardMatch m = findMatchByID(billiardMatchID);
         m.setStatus(MatchStatus.ongoing);
         repository.save(m);
         return "Match with ID " + billiardMatchID + " has been started";
     }
+
+    public boolean setPaidStatus(Integer matchID){
+        BilliardMatch b = findMatchByID(matchID);
+        b.setIsPaid(true);
+        return true;
+    }
+
 }

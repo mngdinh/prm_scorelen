@@ -22,7 +22,7 @@ import org.springframework.stereotype.Service;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 @Slf4j
-public class KafkaListeners {
+public class    KafkaListeners {
 
     ObjectMapper mapper = new ObjectMapper();
 
@@ -34,6 +34,31 @@ public class KafkaListeners {
             containerFactory = "StringKafkaListenerContainerFactory"
     )
     public void listenCommunication(
+            String message,                                                                           // value
+            @Header(value = KafkaHeaders.RECEIVED_KEY, required = false) String key,                  // key
+            @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,
+            Acknowledgment ack
+    ) {
+        try {
+            ProducerRequest request = mapper.readValue(message, ProducerRequest.class);
+            log.info("Received message on partition {} with key {}: {}", partition, key, message);
+            log.info("KafkaCode received: {}", request.getCode());
+            log.info("Data type: {}", request.getData().getClass());
+
+            handlingKafkaCode(request);
+
+            ack.acknowledge();
+        } catch (JsonProcessingException e) {
+            log.error("Failed to parse ProducerRequest: {}", message, e);
+        }
+    }
+
+    //msg từ payment
+    @KafkaListener(
+            topics = "payment",
+            containerFactory = "StringKafkaListenerContainerFactory"
+    )
+    public void listenPayment(
             String message,                                                                           // value
             @Header(value = KafkaHeaders.RECEIVED_KEY, required = false) String key,                  // key
             @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,

@@ -8,5 +8,6 @@ public enum KafkaCode {
     DELETE_CONFIRM,
     START_STREAM,
     STOP_STREAM,
+    PAYMENT
 
 }
