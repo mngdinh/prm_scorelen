@@ -138,7 +138,7 @@ public class BilliardMatchService extends BaseSpecificationService<BilliardMatch
         };
     }
 
-    public List<BilliardMatchResponse> getMatchByTableIDAndStatus (List<String> tableIds, MatchStatus status) {
+    public List<BilliardMatchResponse> getMatchByTableIDAndStatus (List<String> tableIds, List<MatchStatus> status) {
         return billiardMatchMapper.toBilliardMatchResponses(repository.findByBillardTable_BillardTableIDInAndStatus(tableIds, status));
     }
 
@@ -376,7 +376,7 @@ public class BilliardMatchService extends BaseSpecificationService<BilliardMatch
 
         if (noPendingOrOngoing) {
             match.setEndTime(LocalDateTime.now());
-            match.setStatus(MatchStatus.completed);
+            match.setStatus(MatchStatus.notpaid);
 
             String tmp = "Match " + match.getBilliardMatchID() + " has ended";
             log.info(tmp);
@@ -671,6 +671,8 @@ public class BilliardMatchService extends BaseSpecificationService<BilliardMatch
     public boolean setPaidStatus(Integer matchID){
         BilliardMatch b = findMatchByID(matchID);
         b.setIsPaid(true);
+        b.setStatus(MatchStatus.completed);
+        repository.save(b);
         return true;
     }
 

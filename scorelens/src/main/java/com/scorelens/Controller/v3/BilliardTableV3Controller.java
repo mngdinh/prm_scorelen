@@ -112,18 +112,18 @@ public class BilliardTableV3Controller {
                 .map(BilliardTableResponse::getBillardTableID)
                 .toList();
 
-        List<BilliardMatchResponse> ongoingMatches = billiardMatchService.getMatchByTableIDAndStatus(
-                tableIds, MatchStatus.ongoing
-        );
+        List<MatchStatus> statuses = List.of(MatchStatus.notpaid, MatchStatus.ongoing);
+        List<BilliardMatchResponse> ongoingMatches = billiardMatchService.getMatchByTableIDAndStatus(tableIds, statuses);
 
-        Map<String, BilliardMatchResponse> ongoingMap = ongoingMatches.stream()
+
+        Map<String, BilliardMatchResponse> notpaidMap = ongoingMatches.stream()
                 .collect(Collectors.toMap(
                         m -> String.valueOf(m.getBilliardTableID()),
                         Function.identity()
                 ));
 
         r.getContent().forEach(tableResp -> {
-            BilliardMatchResponse match = ongoingMap.get(tableResp.getBillardTableID());
+            BilliardMatchResponse match = notpaidMap.get(tableResp.getBillardTableID());
             if (match != null) {
                 tableResp.setMatchResponse(match);
             }

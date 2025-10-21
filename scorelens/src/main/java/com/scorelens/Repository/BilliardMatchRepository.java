@@ -14,7 +14,7 @@ import java.util.List;
 public interface BilliardMatchRepository extends JpaRepository<BilliardMatch, Integer>, JpaSpecificationExecutor<BilliardMatch> {
     List<BilliardMatch> findBycustomerID(String id);
     List<BilliardMatch> findBystaffID(String id);
-    List<BilliardMatch> findByBillardTable_BillardTableIDInAndStatus(List<String> ids, MatchStatus status);
+    List<BilliardMatch> findByBillardTable_BillardTableIDInAndStatus(List<String> ids, List<MatchStatus> status);
 
 
 //    @Query(value =

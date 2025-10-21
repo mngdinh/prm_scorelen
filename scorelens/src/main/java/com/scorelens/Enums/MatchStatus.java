@@ -5,5 +5,6 @@ public enum MatchStatus {
     ongoing,
     completed,
     cancelled,
-    forfeited //bị xử thua vì vắng mặt,đầu hàng giữa chừng...
+    forfeited, //bị xử thua vì vắng mặt,đầu hàng giữa chừng...
+    notpaid
 }
