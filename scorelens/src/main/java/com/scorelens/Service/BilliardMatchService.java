@@ -75,6 +75,8 @@ public class BilliardMatchService extends BaseSpecificationService<BilliardMatch
     @Autowired
     KafkaProducer producer;
 
+    WebSocketService webSocketService;
+
     @Override
     protected JpaSpecificationExecutor<BilliardMatch> getRepository() {
         return repository;
@@ -394,6 +396,11 @@ public class BilliardMatchService extends BaseSpecificationService<BilliardMatch
                     WebSocketTopic.NOTI_MOBILE,
                     match.getBillardTable().getBillardTableID(),
                     WSFCMCode.WINNING_MATCH
+            );
+
+            webSocketService.sendToWebSocket(
+                    WebSocketTopic.DASHBOARD.getValue() + match.getBillardTable().getStore().getStoreID(),
+                    new WebsocketReq(WSFCMCode.WINNING_MATCH, "OK")
             );
 
             //push
